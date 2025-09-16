@@ -1,5 +1,7 @@
 import Foundation
 import CoreData
+import UIKit
+import Combine
 
 class CoreDataManager: ObservableObject {
     static let shared = CoreDataManager()
@@ -126,7 +128,7 @@ class CoreDataManager: ObservableObject {
         transaction.splitWith = Set(splitWith) as NSSet
         transaction.paymentMethod = paymentMethod
         transaction.notes = notes
-        transaction.tags = tags as NSObject
+        transaction.tags = tags
         transaction.currency = "USD"
         transaction.createdAt = Date()
         transaction.type = splitWith.isEmpty ? "personal" : "split"

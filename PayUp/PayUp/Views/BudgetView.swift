@@ -2,7 +2,7 @@ import SwiftUI
 
 struct BudgetView: View {
     @EnvironmentObject var sessionManager: SessionManager
-    @StateObject private var coreDataManager = CoreDataManager.shared
+    @StateObject private var coreDataManager = CoreDataManager()
     @State private var budgets: [Budget] = []
     @State private var showingAddBudget = false
     @State private var selectedPeriod: BudgetPeriod = .monthly
@@ -28,25 +28,7 @@ struct BudgetView: View {
                             .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1), value: appearAnimation)
 
                         // Active Budgets
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Active Budgets")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(Color.theme.pureWhite)
-                                .padding(.horizontal)
-
-                            ForEach(filteredBudgets) { budget in
-                                BudgetCard(budget: budget)
-                                    .padding(.horizontal)
-                                    .opacity(appearAnimation ? 1 : 0)
-                                    .offset(y: appearAnimation ? 0 : 20)
-                                    .animation(
-                                        .spring(response: 0.6, dampingFraction: 0.7)
-                                            .delay(0.2 + Double(filteredBudgets.firstIndex(where: { $0.id == budget.id }) ?? 0) * 0.05),
-                                        value: appearAnimation
-                                    )
-                            }
-                        }
+                        ActiveBudgetsSection(budgets: filteredBudgets, appearAnimation: appearAnimation)
 
                         Spacer(minLength: 100)
                     }
@@ -103,6 +85,35 @@ struct BudgetView: View {
                 startDate: entity.startDate ?? Date(),
                 endDate: entity.endDate ?? Date()
             )
+        }
+    }
+}
+
+// MARK: - Active Budgets Section
+
+struct ActiveBudgetsSection: View {
+    let budgets: [Budget]
+    let appearAnimation: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Active Budgets")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(Color.theme.pureWhite)
+                .padding(.horizontal)
+
+            ForEach(Array(budgets.enumerated()), id: \.element.id) { index, budget in
+                BudgetCard(budget: budget)
+                    .padding(.horizontal)
+                    .opacity(appearAnimation ? 1 : 0)
+                    .offset(y: appearAnimation ? 0 : 20)
+                    .animation(
+                        .spring(response: 0.6, dampingFraction: 0.7)
+                            .delay(0.2 + Double(index) * 0.05),
+                        value: appearAnimation
+                    )
+            }
         }
     }
 }
@@ -215,17 +226,14 @@ struct BudgetPeriodSelector: View {
                         .frame(width: 80, height: 60)
                         .foregroundColor(selectedPeriod == period ? .white : Color.theme.brightCyan)
                         .background(
-                            Group {
-                                if selectedPeriod == period {
-                                    LinearGradient(
-                                        colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                } else {
-                                    Color.clear
-                                }
-                            }
+                            selectedPeriod == period ?
+                            AnyView(
+                                LinearGradient(
+                                    colors: [Color.theme.brightCyan, Color.theme.electricBlue],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            ) : AnyView(Color.clear)
                         )
                         .glassCard(cornerRadius: 12)
                     }

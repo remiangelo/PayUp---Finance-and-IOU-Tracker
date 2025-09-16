@@ -17,7 +17,7 @@ struct Category: Identifiable, Codable, Hashable {
     }
 
     var color: Color {
-        Color(hex: colorHex) ?? .gray
+        Color(hexString: colorHex)
     }
 
     static let defaultCategories = [
@@ -37,12 +37,12 @@ struct Category: Identifiable, Codable, Hashable {
 // MARK: - Color Extension
 
 extension Color {
-    init?(hex: String) {
-        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+    init(hexString: String) {
+        var hexSanitized = hexString.trimmingCharacters(in: .whitespacesAndNewlines)
         hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
 
         var rgb: UInt64 = 0
-        guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else { return nil }
+        Scanner(string: hexSanitized).scanHexInt64(&rgb)
 
         let length = hexSanitized.count
         if length == 6 {
@@ -59,7 +59,7 @@ extension Color {
                 opacity: Double(rgb & 0x000000FF) / 255.0
             )
         } else {
-            return nil
+            self.init(.gray)
         }
     }
 }

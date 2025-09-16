@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Vision
+import Combine
 
 struct Receipt: Identifiable, Codable {
     let id: UUID

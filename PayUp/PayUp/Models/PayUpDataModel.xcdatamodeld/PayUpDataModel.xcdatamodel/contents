@@ -23,7 +23,7 @@
         <attribute name="isActive" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="type" optional="YES" attributeType="String"/>
-        <relationship name="members" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserEntity"/>
+        <relationship name="members" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserEntity" inverseName="groups" inverseEntity="UserEntity"/>
         <relationship name="transactions" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TransactionEntity" inverseName="group" inverseEntity="TransactionEntity"/>
     </entity>
     <entity name="ReceiptEntity" representedClassName="ReceiptEntity" syncable="YES" codeGenerationType="class">
@@ -61,6 +61,7 @@
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="paymentLinks" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData" customClassName="[String: String]"/>
         <attribute name="phoneNumber" optional="YES" attributeType="String"/>
+        <relationship name="groups" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="GroupEntity" inverseName="members" inverseEntity="GroupEntity"/>
         <relationship name="paidTransactions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TransactionEntity" inverseName="paidBy" inverseEntity="TransactionEntity"/>
         <relationship name="splitTransactions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TransactionEntity" inverseName="splitWith" inverseEntity="TransactionEntity"/>
     </entity>
