@@ -92,6 +92,20 @@ PayUp/
 - Imports UIKit for UIDevice access (device ID generation)
 - NavigationStack for modern navigation
 - TabView for main dashboard navigation
+- Bundle identifier: com.payup.PayUp
+
+## Recent Updates
+- **Launch Screen**: Animated LaunchScreenView with liquid edge effects
+  - 1-second duration with cyclical animations
+  - Glowing cyan/blue edges that slide in from all sides
+  - Pulsing center logo with continuous rotation
+  - Corner accent decorations with spring animations
+- **App Icon**: Configured for App Store submission
+  - Must be RGB format without alpha channel (no transparency)
+  - 1024x1024 PNG required for App Store
+- **Bug Fixes**:
+  - Fixed gradient stop location ordering in LiquidGlassEffects
+  - Added bounds checking and sorting to ensure gradients render correctly
 
 ## Testing Considerations
 - Test session creation and joining flows
