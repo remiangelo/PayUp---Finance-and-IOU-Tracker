@@ -34,11 +34,11 @@ struct LiquidGlassMaterial: ViewModifier {
                         LinearGradient(
                             stops: [
                                 .init(color: .clear, location: 0),
-                                .init(color: .white, location: max(0, shimmerPhase - 0.2)),
-                                .init(color: .white, location: shimmerPhase),
-                                .init(color: .clear, location: min(1, shimmerPhase + 0.2)),
+                                .init(color: .white, location: max(0.01, min(0.98, shimmerPhase - 0.2))),
+                                .init(color: .white, location: max(0.02, min(0.99, shimmerPhase))),
+                                .init(color: .clear, location: max(0.03, min(1, shimmerPhase + 0.2))),
                                 .init(color: .clear, location: 1)
-                            ],
+                            ].sorted(by: { $0.location < $1.location }),
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -296,11 +296,11 @@ struct RefractiveText: ViewModifier {
                 LinearGradient(
                     stops: [
                         .init(color: Color.theme.pureWhite, location: 0),
-                        .init(color: Color.theme.brightCyan, location: gradientPhase - 0.2),
-                        .init(color: Color.theme.electricBlue, location: gradientPhase),
-                        .init(color: Color.theme.pureWhite, location: gradientPhase + 0.2),
+                        .init(color: Color.theme.brightCyan, location: max(0.01, min(0.97, gradientPhase - 0.2))),
+                        .init(color: Color.theme.electricBlue, location: max(0.02, min(0.98, gradientPhase))),
+                        .init(color: Color.theme.pureWhite, location: max(0.03, min(0.99, gradientPhase + 0.2))),
                         .init(color: Color.theme.pureWhite, location: 1)
-                    ],
+                    ].sorted(by: { $0.location < $1.location }),
                     startPoint: .leading,
                     endPoint: .trailing
                 )
