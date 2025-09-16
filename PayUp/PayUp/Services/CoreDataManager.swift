@@ -128,7 +128,10 @@ class CoreDataManager: ObservableObject {
         transaction.splitWith = Set(splitWith) as NSSet
         transaction.paymentMethod = paymentMethod
         transaction.notes = notes
-        transaction.tags = tags
+        // Core Data handles Transformable automatically for arrays
+        if !tags.isEmpty {
+            transaction.setValue(tags, forKey: "tags")
+        }
         transaction.currency = "USD"
         transaction.createdAt = Date()
         transaction.type = splitWith.isEmpty ? "personal" : "split"
