@@ -226,14 +226,17 @@ struct BudgetPeriodSelector: View {
                         .frame(width: 80, height: 60)
                         .foregroundColor(selectedPeriod == period ? .white : Color.theme.brightCyan)
                         .background(
-                            selectedPeriod == period ?
-                            AnyView(
-                                LinearGradient(
-                                    colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(
+                                    selectedPeriod == period ?
+                                    AnyShapeStyle(
+                                        LinearGradient(
+                                            colors: [Color.theme.brightCyan, Color.theme.electricBlue],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    ) : AnyShapeStyle(Color.clear)
                                 )
-                            ) : AnyView(Color.clear)
                         )
                         .glassCard(cornerRadius: 12)
                     }

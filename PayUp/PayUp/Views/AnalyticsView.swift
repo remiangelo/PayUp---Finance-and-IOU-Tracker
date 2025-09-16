@@ -10,18 +10,28 @@ struct AnalyticsView: View {
     @State private var categoryBreakdown: [(Category, Double)] = []
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                WallpaperBackground()
+        ZStack {
+            WallpaperBackground()
+
+            VStack(spacing: 0) {
+                // Title at top
+                Text("Analytics")
+                    .font(.largeTitle.bold())
+                    .foregroundColor(Color.theme.pureWhite)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .padding(.top, 60)
+                    .padding(.bottom, 16)
+
+                // Fixed Period Selector at top
+                AnalyticsPeriodSelector(selectedPeriod: $selectedPeriod)
+                    .padding(.horizontal)
+                    .padding(.bottom, 16)
+                    .opacity(appearAnimation ? 1 : 0)
+                    .offset(y: appearAnimation ? 0 : -20)
 
                 ScrollView {
-                    VStack(spacing: 24) {
-                        // Period Selector
-                        AnalyticsPeriodSelector(selectedPeriod: $selectedPeriod)
-                            .padding(.horizontal)
-                            .opacity(appearAnimation ? 1 : 0)
-                            .offset(y: appearAnimation ? 0 : 20)
-
+                    VStack(spacing: 20) {
                         // Spending Overview Card
                         SpendingOverviewCard(period: selectedPeriod)
                             .padding(.horizontal)
@@ -52,17 +62,14 @@ struct AnalyticsView: View {
 
                         Spacer(minLength: 100)
                     }
-                    .padding(.vertical)
+                    .padding(.top, 8)
                 }
             }
-            .navigationTitle("Analytics")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .onAppear {
-                loadAnalyticsData()
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                    appearAnimation = true
-                }
+        }
+        .onAppear {
+            loadAnalyticsData()
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                appearAnimation = true
             }
         }
     }
@@ -148,32 +155,42 @@ struct AnalyticsPeriodSelector: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .foregroundColor(selectedPeriod == period ? .white : Color.theme.brightCyan)
+                    .foregroundColor(selectedPeriod == period ? Color.theme.darkNavy : Color.theme.pureWhite.opacity(0.7))
                     .background(
-                        selectedPeriod == period ?
-                        AnyView(
-                            Capsule()
-                                .fill(
+                        Capsule()
+                            .fill(
+                                selectedPeriod == period ?
+                                AnyShapeStyle(
                                     LinearGradient(
                                         colors: [Color.theme.brightCyan, Color.theme.electricBlue],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
-                                )
-                        ) : AnyView(
-                            Capsule()
-                                .fill(Color.clear)
-                                .overlay(
-                                    Capsule()
-                                        .strokeBorder(Color.theme.brightCyan.opacity(0.3), lineWidth: 1)
-                                )
-                        )
+                                ) : AnyShapeStyle(Color.clear)
+                            )
+                            .overlay(
+                                selectedPeriod != period ?
+                                Capsule()
+                                    .strokeBorder(Color.theme.brightCyan.opacity(0.3), lineWidth: 1) :
+                                nil
+                            )
                     )
                 }
             }
         }
-        .padding(4)
-        .liquidGlass(intensity: 0.3, cornerRadius: 30)
+        .padding(6)
+        .background(
+            Capsule()
+                .fill(Color.theme.darkNavy.opacity(0.8))
+                .background(
+                    Capsule()
+                        .fill(.ultraThinMaterial)
+                )
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.theme.brightCyan.opacity(0.2), lineWidth: 0.5)
+                )
+        )
     }
 }
 
@@ -193,7 +210,7 @@ struct SpendingOverviewCard: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Total Spent")
                         .font(.caption)
-                        .foregroundColor(Color.theme.brightCyan)
+                        .foregroundColor(Color.theme.pureWhite.opacity(0.6))
                     Text(Currency.usd.format(animateValue ? totalSpent : 0))
                         .font(.system(size: 32, weight: .bold))
                         .refractiveText()
@@ -239,9 +256,20 @@ struct SpendingOverviewCard: View {
                 )
             }
         }
-        .padding(24)
-        .liquidGlass(intensity: 0.4, cornerRadius: 24)
-        .interactiveGlass(cornerRadius: 24)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.theme.darkNavy.opacity(0.9))
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(Color.theme.brightCyan.opacity(0.2), lineWidth: 0.5)
+                )
+        )
+        .shadow(color: Color.black.opacity(0.3), radius: 10, y: 5)
         .onAppear {
             withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
                 animateValue = true
@@ -359,9 +387,20 @@ struct SpendingChartCard: View {
                 Color.clear
             }
         }
-        .padding(24)
-        .liquidGlass(intensity: 0.3, cornerRadius: 24)
-        .depthGlass(depth: 2, maxDepth: 4)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.theme.darkNavy.opacity(0.9))
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(Color.theme.brightCyan.opacity(0.2), lineWidth: 0.5)
+                )
+        )
+        .shadow(color: Color.black.opacity(0.3), radius: 10, y: 5)
     }
 }
 
@@ -401,9 +440,20 @@ struct CategoryBreakdownCard: View {
                 }
             }
         }
-        .padding(24)
-        .liquidGlass(intensity: 0.3, cornerRadius: 24)
-        .prismaticEffect()
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.theme.darkNavy.opacity(0.9))
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(Color.theme.brightCyan.opacity(0.2), lineWidth: 0.5)
+                )
+        )
+        .shadow(color: Color.black.opacity(0.3), radius: 10, y: 5)
     }
 }
 
@@ -518,8 +568,20 @@ struct InsightsCard: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(height: 80)
         }
-        .padding(24)
-        .liquidGlass(intensity: 0.4, cornerRadius: 24)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.theme.darkNavy.opacity(0.9))
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(Color.theme.brightCyan.opacity(0.2), lineWidth: 0.5)
+                )
+        )
+        .shadow(color: Color.black.opacity(0.3), radius: 10, y: 5)
         .onAppear {
             Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {

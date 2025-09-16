@@ -21,35 +21,30 @@ struct LiquidGlassMaterial: ViewModifier {
                         )
 
                     // Shimmer effect
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0),
-                                    Color.white.opacity(0.15),
-                                    Color.white.opacity(0)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0),
+                            Color.white.opacity(0.15),
+                            Color.white.opacity(0)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .mask(
+                        LinearGradient(
+                            stops: [
+                                .init(color: .clear, location: 0),
+                                .init(color: .white, location: max(0, shimmerPhase - 0.2)),
+                                .init(color: .white, location: shimmerPhase),
+                                .init(color: .clear, location: min(1, shimmerPhase + 0.2)),
+                                .init(color: .clear, location: 1)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
                         )
-                        .mask(
-                            RoundedRectangle(cornerRadius: cornerRadius)
-                                .fill(
-                                    LinearGradient(
-                                        stops: [
-                                            .init(color: .clear, location: 0),
-                                            .init(color: .white, location: max(0, shimmerPhase - 0.2)),
-                                            .init(color: .white, location: shimmerPhase),
-                                            .init(color: .clear, location: min(1, shimmerPhase + 0.2)),
-                                            .init(color: .clear, location: 1)
-                                        ],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                        )
-                        .opacity(0.8)
+                        .mask(RoundedRectangle(cornerRadius: cornerRadius))
+                    )
+                    .opacity(0.8)
 
                     // Glass edge highlight
                     RoundedRectangle(cornerRadius: cornerRadius)
@@ -90,15 +85,16 @@ struct LiquidBlurView: View {
             ZStack {
                 // Create animated gradient effect without MeshGradient
                 ForEach(0..<3, id: \.self) { index in
+                    let gradientColors: [Color] = index == 0 ?
+                        [Color.theme.darkNavy.opacity(0.8), Color.clear] :
+                        index == 1 ?
+                        [Color.theme.electricBlue.opacity(0.4), Color.clear] :
+                        [Color.theme.brightCyan.opacity(0.3), Color.clear]
+
                     Circle()
                         .fill(
                             RadialGradient(
-                                colors: [
-                                    index == 0 ? Color.theme.darkNavy.opacity(0.8) :
-                                    index == 1 ? Color.theme.electricBlue.opacity(0.4) :
-                                    Color.theme.brightCyan.opacity(0.3),
-                                    Color.clear
-                                ],
+                                colors: gradientColors,
                                 center: .center,
                                 startRadius: 0,
                                 endRadius: geometry.size.width * 0.5
@@ -226,8 +222,12 @@ struct PrismaticEffect: ViewModifier {
 // MARK: - Liquid Animation Container
 
 struct LiquidAnimationContainer<Content: View>: View {
-    @ViewBuilder let content: Content
+    let content: () -> Content
     @State private var liquidPhase: CGFloat = 0
+
+    init(@ViewBuilder content: @escaping () -> Content) {
+        self.content = content
+    }
 
     var body: some View {
         ZStack {
@@ -254,7 +254,7 @@ struct LiquidAnimationContainer<Content: View>: View {
                     )
             }
 
-            content
+            content()
         }
         .onAppear {
             liquidPhase = 1
