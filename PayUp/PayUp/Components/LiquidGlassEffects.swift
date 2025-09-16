@@ -32,22 +32,22 @@ struct LiquidGlassMaterial: ViewModifier {
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
-                            .mask(
-                                RoundedRectangle(cornerRadius: cornerRadius)
-                                    .fill(
-                                        LinearGradient(
-                                            stops: [
-                                                .init(color: .clear, location: 0),
-                                                .init(color: .white, location: shimmerPhase - 0.2),
-                                                .init(color: .white, location: shimmerPhase),
-                                                .init(color: .clear, location: shimmerPhase + 0.2),
-                                                .init(color: .clear, location: 1)
-                                            ],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
+                        )
+                        .mask(
+                            RoundedRectangle(cornerRadius: cornerRadius)
+                                .fill(
+                                    LinearGradient(
+                                        stops: [
+                                            .init(color: .clear, location: 0),
+                                            .init(color: .white, location: max(0, shimmerPhase - 0.2)),
+                                            .init(color: .white, location: shimmerPhase),
+                                            .init(color: .clear, location: min(1, shimmerPhase + 0.2)),
+                                            .init(color: .clear, location: 1)
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
                                     )
-                            )
+                                )
                         )
                         .opacity(0.8)
 
@@ -87,35 +87,36 @@ struct LiquidBlurView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            Rectangle()
-                .fill(
-                    MeshGradient(
-                        width: 3,
-                        height: 3,
-                        points: [
-                            .init(0, 0), .init(0.5, 0), .init(1, 0),
-                            .init(0, 0.5), .init(0.5 + sin(animationPhase) * 0.1, 0.5 + cos(animationPhase) * 0.1), .init(1, 0.5),
-                            .init(0, 1), .init(0.5, 1), .init(1, 1)
-                        ],
-                        colors: [
-                            Color.theme.darkNavy.opacity(0.8),
-                            Color.theme.electricBlue.opacity(0.3),
-                            Color.theme.brightCyan.opacity(0.2),
-                            Color.theme.electricBlue.opacity(0.4),
-                            Color.theme.brightCyan.opacity(0.5),
-                            Color.theme.darkNavy.opacity(0.3),
-                            Color.theme.brightCyan.opacity(0.2),
-                            Color.theme.electricBlue.opacity(0.3),
-                            Color.theme.darkNavy.opacity(0.8)
-                        ]
-                    )
-                )
-                .blur(radius: radius, opaque: opaque)
-                .onAppear {
-                    withAnimation(.easeInOut(duration: 10).repeatForever(autoreverses: true)) {
-                        animationPhase = .pi * 2
-                    }
+            ZStack {
+                // Create animated gradient effect without MeshGradient
+                ForEach(0..<3, id: \.self) { index in
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    index == 0 ? Color.theme.darkNavy.opacity(0.8) :
+                                    index == 1 ? Color.theme.electricBlue.opacity(0.4) :
+                                    Color.theme.brightCyan.opacity(0.3),
+                                    Color.clear
+                                ],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: geometry.size.width * 0.5
+                            )
+                        )
+                        .scaleEffect(1.0 + sin(animationPhase + Double(index)) * 0.2)
+                        .offset(
+                            x: cos(animationPhase + Double(index) * 2) * 50,
+                            y: sin(animationPhase + Double(index) * 2) * 50
+                        )
+                        .blur(radius: radius, opaque: opaque)
                 }
+            }
+            .onAppear {
+                withAnimation(.easeInOut(duration: 10).repeatForever(autoreverses: true)) {
+                    animationPhase = .pi * 2
+                }
+            }
         }
     }
 }
@@ -225,7 +226,7 @@ struct PrismaticEffect: ViewModifier {
 // MARK: - Liquid Animation Container
 
 struct LiquidAnimationContainer<Content: View>: View {
-    let content: () -> Content
+    @ViewBuilder let content: Content
     @State private var liquidPhase: CGFloat = 0
 
     var body: some View {
@@ -253,7 +254,7 @@ struct LiquidAnimationContainer<Content: View>: View {
                     )
             }
 
-            content()
+            content
         }
         .onAppear {
             liquidPhase = 1

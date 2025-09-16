@@ -21,26 +21,46 @@ struct SessionDashboardView: View {
                 LiquidAnimationContainer {
                     VStack(spacing: 0) {
                         // Main content with tab switching
-                        Group {
+                        ZStack {
                             switch selectedTab {
                             case 0:
                                 TransactionsListView()
+                                    .transition(.asymmetric(
+                                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                                        removal: .move(edge: .leading).combined(with: .opacity)
+                                    ))
                             case 1:
                                 BalancesView()
+                                    .transition(.asymmetric(
+                                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                                        removal: .move(edge: .leading).combined(with: .opacity)
+                                    ))
                             case 2:
                                 AnalyticsView()
+                                    .transition(.asymmetric(
+                                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                                        removal: .move(edge: .leading).combined(with: .opacity)
+                                    ))
                             case 3:
                                 SettlementsView()
+                                    .transition(.asymmetric(
+                                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                                        removal: .move(edge: .leading).combined(with: .opacity)
+                                    ))
                             case 4:
                                 SessionInfoView()
+                                    .transition(.asymmetric(
+                                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                                        removal: .move(edge: .leading).combined(with: .opacity)
+                                    ))
                             default:
                                 TransactionsListView()
+                                    .transition(.asymmetric(
+                                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                                        removal: .move(edge: .leading).combined(with: .opacity)
+                                    ))
                             }
                         }
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .move(edge: .leading).combined(with: .opacity)
-                        ))
                         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedTab)
 
                         Spacer(minLength: 90) // Space for tab bar
