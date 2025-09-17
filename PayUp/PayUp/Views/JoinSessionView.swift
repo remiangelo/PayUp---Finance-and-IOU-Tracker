@@ -7,6 +7,7 @@ struct JoinSessionView: View {
     @State private var userName = ""
     @State private var showingError = false
     @State private var appearAnimation = false
+    @State private var showingLogin = false
 
     var body: some View {
         NavigationStack {
@@ -94,8 +95,17 @@ struct JoinSessionView: View {
                     }
                     .foregroundColor(Color.theme.brightCyan)
                 }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Log In") {
+                        showingLogin = true
+                    }
+                    .foregroundColor(Color.theme.brightCyan)
+                }
             }
             .toolbarBackground(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showingLogin) {
+                LoginView()
+            }
             .alert("Error", isPresented: $showingError) {
                 Button("OK") {
                     sessionManager.errorMessage = nil

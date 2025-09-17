@@ -58,7 +58,7 @@ struct CreateSessionView: View {
                         dismiss()
                     }) {
                         Text("Create Session")
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .font(.system(size: 20, weight: .semibold, design: .rounded))
                             .frame(width: 220, height: 54)
                             .glassCard(cornerRadius: 27)
                             .overlay(

@@ -4,83 +4,93 @@ struct WelcomeView: View {
     @Binding var showingCreateSession: Bool
     @Binding var showingJoinSession: Bool
     @State private var appearAnimation = false
-    @State private var buttonHover = false
 
     var body: some View {
         ZStack {
-            WallpaperBackground()
+            // Liquid glass background
+            LiquidBackground()
 
-            VStack(spacing: 60) {
+            VStack(spacing: 0) {
                 Spacer()
 
-                // Clean logo with subtle animation
-                VStack(spacing: 16) {
-                    Image(systemName: "dollarsign.circle.fill")
-                        .font(.system(size: 80))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .scaleEffect(appearAnimation ? 1.0 : 0.5)
-                        .opacity(appearAnimation ? 1.0 : 0.0)
-
-                    Text("PayUp")
-                        .font(.system(size: 42, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.theme.pureWhite)
-                        .opacity(appearAnimation ? 1.0 : 0.0)
-                        .offset(y: appearAnimation ? 0 : 20)
-                }
-
-                // Simplified button stack
-                VStack(spacing: 16) {
-                    Button(action: {
-                        showingCreateSession = true
-                    }) {
-                        Text("Create Session")
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
-                            .frame(width: 220, height: 54)
-                            .glassCard(cornerRadius: 27)
+                // Logo and title
+                VStack(spacing: 24) {
+                    // Animated glass orb with icon
+                    ZStack {
+                        Circle()
+                            .fill(.ultraThinMaterial)
+                            .frame(width: 120, height: 120)
                             .overlay(
-                                Capsule()
-                                    .strokeBorder(
+                                Circle()
+                                    .stroke(
                                         LinearGradient(
-                                            colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
+                                            colors: [
+                                                Color(red: 0, green: 0.75, blue: 1).opacity(0.6),
+                                                Color(red: 0, green: 0.5, blue: 1).opacity(0.3)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
                                         ),
                                         lineWidth: 2
                                     )
+                                    .blur(radius: 3)
                             )
-                            .foregroundColor(.white)
-                            .shadow(color: Color.theme.brightCyan.opacity(0.3), radius: 15, y: 5)
+                            .shadow(
+                                color: Color(red: 0, green: 0.75, blue: 1).opacity(0.4),
+                                radius: 20,
+                                x: 0,
+                                y: 10
+                            )
+
+                        Image(systemName: "creditcard.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        .white,
+                                        Color(red: 0, green: 0.75, blue: 1)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
                     }
-                    .opacity(appearAnimation ? 1.0 : 0.0)
+                    .scaleEffect(appearAnimation ? 1 : 0.5)
+                    .opacity(appearAnimation ? 1 : 0)
+
+                    // App title
+                    LiquidText(text: "PayUp", fontSize: 48)
+                        .opacity(appearAnimation ? 1 : 0)
+                        .offset(y: appearAnimation ? 0 : 20)
+
+                    // Subtitle
+                    Text("Track IOUs with style")
+                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.8))
+                        .opacity(appearAnimation ? 1 : 0)
+                        .offset(y: appearAnimation ? 0 : 20)
+                }
+                .padding(.bottom, 60)
+
+                // Action buttons
+                VStack(spacing: 20) {
+                    FrostedGlassButton("Create New Session", icon: "plus.circle.fill") {
+                        showingCreateSession = true
+                    }
+                    .opacity(appearAnimation ? 1 : 0)
                     .offset(y: appearAnimation ? 0 : 30)
 
-                    Button(action: {
+                    FrostedGlassButton("Join Existing Session", icon: "arrow.right.circle.fill") {
                         showingJoinSession = true
-                    }) {
-                        Text("Join Session")
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
-                            .frame(width: 220, height: 54)
-                            .glassCard(cornerRadius: 27)
-                            .overlay(
-                                Capsule()
-                                    .strokeBorder(Color.theme.brightCyan.opacity(0.5), lineWidth: 1.5)
-                            )
-                            .foregroundColor(Color.theme.pureWhite)
-                            .shadow(color: Color.theme.brightCyan.opacity(0.2), radius: 10, y: 3)
                     }
-                    .opacity(appearAnimation ? 1.0 : 0.0)
-                    .offset(y: appearAnimation ? 0 : 30)
+                    .opacity(appearAnimation ? 1 : 0)
+                    .offset(y: appearAnimation ? 0 : 40)
                 }
 
                 Spacer()
                 Spacer()
             }
+            .padding(.horizontal, 20)
         }
         .onAppear {
             withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.1)) {
@@ -95,4 +105,5 @@ struct WelcomeView: View {
         showingCreateSession: .constant(false),
         showingJoinSession: .constant(false)
     )
+    .preferredColorScheme(.dark)
 }

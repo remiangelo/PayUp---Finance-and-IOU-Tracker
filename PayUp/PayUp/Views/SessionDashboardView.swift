@@ -5,119 +5,101 @@ struct SessionDashboardView: View {
     @State private var showingAddTransaction = false
     @State private var selectedTab = 0
 
-    private let tabs = [
-        FrostedGlassTabBar.TabItem(icon: "list.bullet", title: "Transactions"),
-        FrostedGlassTabBar.TabItem(icon: "chart.pie.fill", title: "Balances"),
-        FrostedGlassTabBar.TabItem(icon: "chart.line.uptrend.xyaxis", title: "Analytics"),
-        FrostedGlassTabBar.TabItem(icon: "arrow.left.arrow.right.circle", title: "Settle"),
-        FrostedGlassTabBar.TabItem(icon: "person.3.fill", title: "Session")
-    ]
-
     var body: some View {
         NavigationStack {
             ZStack {
-                WallpaperBackground()
-
-                // Liquid animation background layer
-                LiquidAnimationContainer {
-                    Color.clear
-                }
-                .allowsHitTesting(false)
+                // Liquid glass background
+                LiquidBackground()
 
                 VStack(spacing: 0) {
-                    // Main content with tab switching
+                    // Header info card
+                    if let session = sessionManager.currentSession {
+                        LiquidGlassCard(materialType: .ultraThin, cornerRadius: 24) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Session Code")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.6))
+                                    Text(session.sessionKey)
+                                        .font(.title2.bold())
+                                        .foregroundColor(.white)
+                                }
+
+                                Spacer()
+
+                                VStack(alignment: .trailing, spacing: 4) {
+                                    Text("Participants")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.6))
+                                    Text("\(session.users.count)")
+                                        .font(.title2.bold())
+                                        .foregroundColor(.white)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 10)
+                    }
+
+                    // Tab content
                     TabView(selection: $selectedTab) {
                         TransactionsListView()
                             .tag(0)
+
                         BalancesView()
                             .tag(1)
-                        AnalyticsView()
-                            .tag(2)
+
                         SettlementsView()
-                            .tag(3)
+                            .tag(2)
+
                         SessionInfoView()
-                            .tag(4)
+                            .tag(3)
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
-                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedTab)
+                    .padding(.top, 10)
 
-                    Spacer(minLength: 90) // Space for tab bar
+                    // Custom tab bar
+                    HStack(spacing: 0) {
+                        TabBarButton(icon: "list.bullet", label: "Transactions", isSelected: selectedTab == 0) {
+                            selectedTab = 0
+                        }
+
+                        TabBarButton(icon: "chart.pie.fill", label: "Balances", isSelected: selectedTab == 1) {
+                            selectedTab = 1
+                        }
+
+                        TabBarButton(icon: "arrow.left.arrow.right", label: "Settle", isSelected: selectedTab == 2) {
+                            selectedTab = 2
+                        }
+
+                        TabBarButton(icon: "info.circle", label: "Info", isSelected: selectedTab == 3) {
+                            selectedTab = 3
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 24)
+                            .fill(.ultraThinMaterial)
+                            .shadow(color: .black.opacity(0.2), radius: 20, y: -5)
+                    )
                 }
 
-                // Floating custom tab bar
+                // Floating add button
                 VStack {
                     Spacer()
-                    FrostedGlassTabBar(selectedTab: $selectedTab, tabs: tabs)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 20)
-                        .shadow(color: Color.black.opacity(0.3), radius: 20, y: 10)
+                    HStack {
+                        Spacer()
+                        FloatingGlassButton(icon: "plus", action: {
+                            showingAddTransaction = true
+                        })
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 100)
+                    }
                 }
             }
             .navigationTitle(sessionManager.currentSession?.name ?? "Session")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    // Session status indicator
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(Color.theme.success)
-                            .frame(width: 8, height: 8)
-                            .overlay(
-                                Circle()
-                                    .fill(Color.theme.success)
-                                    .frame(width: 8, height: 8)
-                                    .blur(radius: 2)
-                                    .scaleEffect(1.5)
-                                    .opacity(0.5)
-                            )
-
-                        Text("Active")
-                            .font(.caption)
-                            .foregroundColor(Color.theme.pureWhite.opacity(0.8))
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .liquidGlass(intensity: 0.3, cornerRadius: 12)
-                }
-
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingAddTransaction = true
-                    }) {
-                        ZStack {
-                            // Animated background glow
-                            Circle()
-                                .fill(
-                                    RadialGradient(
-                                        colors: [
-                                            Color.theme.brightCyan.opacity(0.4),
-                                            Color.theme.electricBlue.opacity(0.2),
-                                            Color.clear
-                                        ],
-                                        center: .center,
-                                        startRadius: 0,
-                                        endRadius: 20
-                                    )
-                                )
-                                .frame(width: 44, height: 44)
-                                .blur(radius: 4)
-
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 28))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        }
-                    }
-                    .scaleEffect(showingAddTransaction ? 0.9 : 1.0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: showingAddTransaction)
-                }
-            }
             .sheet(isPresented: $showingAddTransaction) {
                 AddTransactionView()
                     .environmentObject(sessionManager)
@@ -126,78 +108,42 @@ struct SessionDashboardView: View {
     }
 }
 
-// MARK: - Enhanced Transaction List View
-
-extension TransactionsListView {
-    func enhancedCard() -> some View {
-        self
-            .liquidGlass(intensity: 0.3, cornerRadius: 20)
-            .interactiveGlass(cornerRadius: 20)
-    }
-}
-
-// MARK: - Quick Stats Bar
-
-struct QuickStatsBar: View {
-    let totalSpent: Double
-    let activeUsers: Int
-    let pendingSettlements: Int
+struct TabBarButton: View {
+    let icon: String
+    let label: String
+    let isSelected: Bool
+    let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
-            StatWidget(
-                title: "Total",
-                value: Currency.usd.format(totalSpent),
-                color: Color.theme.brightCyan
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
+                    .foregroundColor(isSelected ? Color(red: 0, green: 0.75, blue: 1) : .white.opacity(0.6))
+
+                Text(label)
+                    .font(.system(size: 10, weight: isSelected ? .semibold : .regular))
+                    .foregroundColor(isSelected ? Color(red: 0, green: 0.75, blue: 1) : .white.opacity(0.6))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isSelected ? Color(red: 0, green: 0.75, blue: 1).opacity(0.1) : Color.clear)
             )
-
-            Divider()
-                .background(Color.theme.brightCyan.opacity(0.3))
-                .frame(height: 30)
-
-            StatWidget(
-                title: "Active",
-                value: "\(activeUsers)",
-                color: Color.theme.electricBlue
-            )
-
-            Divider()
-                .background(Color.theme.brightCyan.opacity(0.3))
-                .frame(height: 30)
-
-            StatWidget(
-                title: "Pending",
-                value: "\(pendingSettlements)",
-                color: Color.theme.sparkOrange
+            .overlay(
+                isSelected ?
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color(red: 0, green: 0.75, blue: 1).opacity(0.3), lineWidth: 1)
+                    .blur(radius: 2)
+                : nil
             )
         }
-        .padding(.vertical, 12)
-        .liquidGlass(intensity: 0.2, cornerRadius: 16)
-        .padding(.horizontal)
-    }
-}
-
-struct StatWidget: View {
-    let title: String
-    let value: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Text(title)
-                .font(.caption2)
-                .foregroundColor(Color.theme.pureWhite.opacity(0.6))
-
-            Text(value)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(color)
-                .refractiveText()
-        }
-        .frame(maxWidth: .infinity)
     }
 }
 
 #Preview {
     SessionDashboardView()
         .environmentObject(SessionManager())
+        .preferredColorScheme(.dark)
 }
