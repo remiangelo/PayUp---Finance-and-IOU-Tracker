@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 // MARK: - Liquid Glass Design System
 // Following Apple's HIG for materials and visual effects
@@ -139,7 +140,7 @@ struct LiquidWave: View {
 
                 for x in stride(from: 0, to: width, by: 1) {
                     let relativeX = x / width
-                    let y = midHeight + sin(relativeX * .pi * frequency + phase) * amplitude
+                    let y = midHeight + Foundation.sin(relativeX * .pi * frequency + phase) * amplitude
                     path.addLine(to: CGPoint(x: x, y: y))
                 }
 
@@ -261,7 +262,7 @@ struct LiquidText: View {
                 LinearGradient(
                     colors: [
                         .white,
-                        Color(red: 0.5 + sin(wavePhase) * 0.5, green: 0.7, blue: 1)
+                        Color(red: 0.5 + Foundation.sin(wavePhase) * 0.5, green: 0.7, blue: 1)
                     ],
                     startPoint: .leading,
                     endPoint: .trailing

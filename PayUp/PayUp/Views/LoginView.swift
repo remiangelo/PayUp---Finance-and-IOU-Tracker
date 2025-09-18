@@ -9,92 +9,107 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                WallpaperBackground()
+                ProfessionalBackground()
 
-                VStack(spacing: 24) {
+                VStack(spacing: ProfessionalDesignSystem.Spacing.xl) {
                     Spacer()
 
-                    VStack(spacing: 20) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Email")
-                                .font(.caption)
-                                .foregroundColor(Color.theme.brightCyan)
-                                .padding(.horizontal, 4)
+                    // Title
+                    Text("Sign In")
+                        .font(ProfessionalDesignSystem.Typography.title)
+                        .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
+                        .opacity(isAnimating ? 1 : 0)
 
-                            TextField("name@example.com", text: $email, prompt: Text("name@example.com").foregroundColor(Color.theme.pureWhite.opacity(0.5)))
+                    // Form fields
+                    VStack(spacing: ProfessionalDesignSystem.Spacing.lg) {
+                        VStack(alignment: .leading, spacing: ProfessionalDesignSystem.Spacing.sm) {
+                            Text("Email")
+                                .font(ProfessionalDesignSystem.Typography.caption)
+                                .foregroundColor(ProfessionalDesignSystem.Colors.textSecondary)
+
+                            TextField("name@example.com", text: $email)
                                 .keyboardType(.emailAddress)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
-                                .glassTextField()
+                                .textFieldStyle(ProfessionalTextFieldStyle())
                         }
                         .opacity(isAnimating ? 1 : 0)
                         .offset(y: isAnimating ? 0 : 20)
 
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: ProfessionalDesignSystem.Spacing.sm) {
                             Text("Password")
-                                .font(.caption)
-                                .foregroundColor(Color.theme.brightCyan)
-                                .padding(.horizontal, 4)
+                                .font(ProfessionalDesignSystem.Typography.caption)
+                                .foregroundColor(ProfessionalDesignSystem.Colors.textSecondary)
 
-                            SecureField("Enter your password", text: $password, prompt: Text("Enter your password").foregroundColor(Color.theme.pureWhite.opacity(0.5)))
-                                .glassTextField()
+                            SecureField("Enter your password", text: $password)
+                                .textFieldStyle(ProfessionalTextFieldStyle())
                         }
                         .opacity(isAnimating ? 1 : 0)
                         .offset(y: isAnimating ? 0 : 20)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1), value: isAnimating)
+                        .animation(.easeOut(duration: 0.4).delay(0.1), value: isAnimating)
                     }
-                    .padding(.horizontal, 30)
+                    .padding(.horizontal, ProfessionalDesignSystem.Spacing.xl)
 
                     Spacer()
 
-                    Button(action: {
-                        // Non-functional: just dismiss for now
-                        dismiss()
-                    }) {
-                        Text("Sign In")
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
-                            .frame(width: 220, height: 54)
-                            .glassCard(cornerRadius: 27)
-                            .overlay(
-                                Capsule()
-                                    .strokeBorder(Color.theme.brightCyan.opacity(0.5), lineWidth: 1.5)
-                            )
-                            .foregroundColor(.white)
-                            .shadow(color: Color.theme.brightCyan.opacity(0.2), radius: 10, y: 3)
-                    }
-                    .disabled(email.isEmpty || password.isEmpty)
-                    .opacity(email.isEmpty || password.isEmpty ? 0.5 : 1)
-                    .opacity(isAnimating ? 1 : 0)
-                    .offset(y: isAnimating ? 0 : 30)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2), value: isAnimating)
+                    // Action buttons
+                    VStack(spacing: ProfessionalDesignSystem.Spacing.md) {
+                        PrimaryButton("Sign In") {
+                            // Non-functional: just dismiss for now
+                            dismiss()
+                        }
+                        .disabled(email.isEmpty || password.isEmpty)
+                        .opacity(email.isEmpty || password.isEmpty ? 0.6 : 1)
+                        .opacity(isAnimating ? 1 : 0)
+                        .offset(y: isAnimating ? 0 : 30)
+                        .animation(.easeOut(duration: 0.4).delay(0.2), value: isAnimating)
 
-                    Button {
-                        // Placeholder for password reset
-                    } label: {
-                        Text("Forgot password?")
-                            .font(.footnote)
-                            .foregroundColor(Color.theme.brightCyan.opacity(0.8))
+                        Button {
+                            // Placeholder for password reset
+                        } label: {
+                            Text("Forgot password?")
+                                .font(ProfessionalDesignSystem.Typography.caption)
+                                .foregroundColor(ProfessionalDesignSystem.Colors.primaryBlue)
+                        }
+                        .padding(.top, ProfessionalDesignSystem.Spacing.sm)
                     }
-                    .padding(.top, 8)
-
-                    Spacer()
+                    .padding(.horizontal, ProfessionalDesignSystem.Spacing.xl)
+                    .padding(.bottom, ProfessionalDesignSystem.Spacing.xl)
                 }
             }
-            .navigationTitle("Log In")
+            .navigationTitle("Sign In")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
-                        .foregroundColor(Color.theme.brightCyan)
+                        .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
                 }
             }
             .toolbarBackground(.hidden, for: .navigationBar)
             .onAppear {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                withAnimation(.easeOut(duration: 0.3)) {
                     isAnimating = true
                 }
             }
         }
+    }
+}
+
+// MARK: - Text Field Style
+struct ProfessionalTextFieldStyle: TextFieldStyle {
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration
+            .padding(ProfessionalDesignSystem.Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(ProfessionalDesignSystem.Colors.cardBackground)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(ProfessionalDesignSystem.Colors.divider, lineWidth: 0.5)
+                    )
+            )
+            .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
+            .font(ProfessionalDesignSystem.Typography.body)
     }
 }
 

@@ -8,37 +8,37 @@ struct SessionDashboardView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Liquid glass background
-                LiquidBackground()
+                // Professional background
+                ProfessionalBackground()
 
                 VStack(spacing: 0) {
-                    // Header info card
+                    // Session info header
                     if let session = sessionManager.currentSession {
-                        LiquidGlassCard(materialType: .ultraThin, cornerRadius: 24) {
+                        ProfessionalCard {
                             HStack {
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: ProfessionalDesignSystem.Spacing.xs) {
                                     Text("Session Code")
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.6))
+                                        .font(ProfessionalDesignSystem.Typography.caption)
+                                        .foregroundColor(ProfessionalDesignSystem.Colors.textTertiary)
                                     Text(session.sessionKey)
-                                        .font(.title2.bold())
-                                        .foregroundColor(.white)
+                                        .font(ProfessionalDesignSystem.Typography.headline)
+                                        .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
                                 }
 
                                 Spacer()
 
-                                VStack(alignment: .trailing, spacing: 4) {
+                                VStack(alignment: .trailing, spacing: ProfessionalDesignSystem.Spacing.xs) {
                                     Text("Participants")
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.6))
+                                        .font(ProfessionalDesignSystem.Typography.caption)
+                                        .foregroundColor(ProfessionalDesignSystem.Colors.textTertiary)
                                     Text("\(session.users.count)")
-                                        .font(.title2.bold())
-                                        .foregroundColor(.white)
+                                        .font(ProfessionalDesignSystem.Typography.headline)
+                                        .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
                                 }
                             }
                         }
                         .padding(.horizontal)
-                        .padding(.top, 10)
+                        .padding(.top, ProfessionalDesignSystem.Spacing.sm)
                     }
 
                     // Tab content
@@ -56,88 +56,55 @@ struct SessionDashboardView: View {
                             .tag(3)
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
-                    .padding(.top, 10)
+                    .padding(.top, ProfessionalDesignSystem.Spacing.sm)
 
                     // Custom tab bar
-                    HStack(spacing: 0) {
-                        TabBarButton(icon: "list.bullet", label: "Transactions", isSelected: selectedTab == 0) {
-                            selectedTab = 0
-                        }
-
-                        TabBarButton(icon: "chart.pie.fill", label: "Balances", isSelected: selectedTab == 1) {
-                            selectedTab = 1
-                        }
-
-                        TabBarButton(icon: "arrow.left.arrow.right", label: "Settle", isSelected: selectedTab == 2) {
-                            selectedTab = 2
-                        }
-
-                        TabBarButton(icon: "info.circle", label: "Info", isSelected: selectedTab == 3) {
-                            selectedTab = 3
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(.ultraThinMaterial)
-                            .shadow(color: .black.opacity(0.2), radius: 20, y: -5)
+                    ProfessionalTabBar(
+                        selectedTab: $selectedTab,
+                        tabs: [
+                            ("list.bullet", "Transactions"),
+                            ("chart.pie.fill", "Balances"),
+                            ("arrow.left.arrow.right", "Settle"),
+                            ("info.circle", "Info")
+                        ]
                     )
+                    .padding(.horizontal)
+                    .padding(.bottom, ProfessionalDesignSystem.Spacing.lg)
                 }
 
-                // Floating add button
+                // Floating action button
                 VStack {
                     Spacer()
                     HStack {
                         Spacer()
-                        FloatingGlassButton(icon: "plus", action: {
+                        FloatingActionButton(icon: "plus", action: {
                             showingAddTransaction = true
                         })
-                        .padding(.trailing, 20)
+                        .padding(.trailing, ProfessionalDesignSystem.Spacing.lg)
                         .padding(.bottom, 100)
                     }
                 }
             }
             .navigationTitle(sessionManager.currentSession?.name ?? "Session")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        sessionManager.leaveSession()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            Text("Leave")
+                        }
+                        .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
+                    }
+                }
+            }
             .sheet(isPresented: $showingAddTransaction) {
                 AddTransactionView()
                     .environmentObject(sessionManager)
+                    .background(ProfessionalBackground())
             }
-        }
-    }
-}
-
-struct TabBarButton: View {
-    let icon: String
-    let label: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
-                    .foregroundColor(isSelected ? Color(red: 0, green: 0.75, blue: 1) : .white.opacity(0.6))
-
-                Text(label)
-                    .font(.system(size: 10, weight: isSelected ? .semibold : .regular))
-                    .foregroundColor(isSelected ? Color(red: 0, green: 0.75, blue: 1) : .white.opacity(0.6))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(isSelected ? Color(red: 0, green: 0.75, blue: 1).opacity(0.1) : Color.clear)
-            )
-            .overlay(
-                isSelected ?
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color(red: 0, green: 0.75, blue: 1).opacity(0.3), lineWidth: 1)
-                    .blur(radius: 2)
-                : nil
-            )
         }
     }
 }

@@ -2,272 +2,179 @@ import SwiftUI
 
 struct SettlementsView: View {
     @EnvironmentObject var sessionManager: SessionManager
-    @State private var animateSettlements = false
-    @State private var rotationAngles: [Double] = []
 
-    var settlements: [(from: User, to: User, amount: Double)] {
+    private var settlements: [(from: User, to: User, amount: Double)] {
         sessionManager.currentSession?.getSettlements() ?? []
     }
 
+    private var totalToSettle: Double {
+        settlements.reduce(0) { $0 + $1.amount }
+    }
+
     var body: some View {
-        ZStack {
-            WallpaperBackground()
-
-            ScrollView {
-                VStack(spacing: 20) {
-                    if settlements.isEmpty {
-                        VStack(spacing: 20) {
-                            ZStack {
-                                Circle()
-                                    .fill(
-                                        RadialGradient(
-                                            colors: [
-                                                Color.theme.brightCyan.opacity(0.3),
-                                                Color.theme.electricBlue.opacity(0.1)
-                                            ],
-                                            center: .center,
-                                            startRadius: 0,
-                                            endRadius: 80
-                                        )
-                                    )
-                                    .frame(width: 160, height: 160)
-                                    .blur(radius: 20)
-
+        ScrollView {
+            VStack(spacing: ProfessionalDesignSystem.Spacing.lg) {
+                // Header Card
+                if !settlements.isEmpty {
+                    ProfessionalCard {
+                        VStack(spacing: ProfessionalDesignSystem.Spacing.md) {
+                            HStack {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 100))
-                                    .foregroundStyle(
-                                        LinearGradient(
-                                            colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                            startPoint: .top,
-                                            endPoint: .bottom
-                                        )
-                                    )
-                                    .shadow(color: Color.theme.electricBlue.opacity(0.3), radius: 10)
+                                    .font(.system(size: 24))
+                                    .foregroundColor(ProfessionalDesignSystem.Colors.success)
+
+                                Text("Settlements Ready")
+                                    .font(ProfessionalDesignSystem.Typography.headline)
+                                    .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
                             }
 
-                            VStack(spacing: 10) {
-                                Text("All Settled Up!")
-                                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                                    .foregroundStyle(
-                                        LinearGradient(
-                                            colors: [Color.theme.electricBlue, Color.theme.brightCyan],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-
-                                Text("No outstanding debts")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-                            }
+                            Text("\(settlements.count) payment\(settlements.count == 1 ? "" : "s") to settle all debts")
+                                .font(ProfessionalDesignSystem.Typography.body)
+                                .foregroundColor(ProfessionalDesignSystem.Colors.textSecondary)
                         }
-                        .padding(.top, 100)
-                    } else {
-                        VStack(alignment: .leading, spacing: 15) {
-                            Text("Suggested Settlements")
-                                .font(.system(size: 24, weight: .bold, design: .rounded))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [Color.theme.electricBlue, Color.theme.brightCyan],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .padding(.horizontal)
-
-                            LazyVStack(spacing: 20) {
-                                ForEach(Array(settlements.enumerated()), id: \.offset) { index, settlement in
-                                    SettlementCard(
-                                        settlement: settlement,
-                                        isCurrentUser: settlement.from.id == sessionManager.currentUser?.id || settlement.to.id == sessionManager.currentUser?.id,
-                                        currentUserId: sessionManager.currentUser?.id,
-                                        index: index,
-                                        rotationAngle: index < rotationAngles.count ? rotationAngles[index] : 0
-                                    )
-                                    .transition(.asymmetric(
-                                        insertion: .scale.combined(with: .opacity),
-                                        removal: .scale.combined(with: .opacity)
-                                    ))
-                                    .animation(
-                                        .spring(response: 0.6, dampingFraction: 0.7)
-                                            .delay(Double(index) * 0.1),
-                                        value: animateSettlements
-                                    )
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
-                        .padding(.top, 20)
-
-                        Text("These payments will settle all debts with minimum transactions")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .glassCard(cornerRadius: 15)
-                            .padding(.horizontal)
-                            .padding(.bottom, 30)
                     }
+                    .padding(.horizontal)
+                }
+
+                // Settlements List
+                if settlements.isEmpty {
+                    EmptySettlementsState()
+                        .padding(.top, 100)
+                } else {
+                    VStack(spacing: ProfessionalDesignSystem.Spacing.md) {
+                        ForEach(Array(settlements.enumerated()), id: \.offset) { _, settlement in
+                            SettlementCard(
+                                from: settlement.from,
+                                to: settlement.to,
+                                amount: settlement.amount
+                            )
+                            .padding(.horizontal)
+                        }
+                    }
+                    .padding(.top, ProfessionalDesignSystem.Spacing.sm)
                 }
             }
+            .padding(.top, ProfessionalDesignSystem.Spacing.md)
+            .padding(.bottom, 120) // Space for tab bar
         }
-        .onAppear {
-            rotationAngles = settlements.map { _ in Double.random(in: -3...3) }
-            animateSettlements = true
-        }
+        .background(Color.clear)
     }
 }
 
 struct SettlementCard: View {
-    let settlement: (from: User, to: User, amount: Double)
-    let isCurrentUser: Bool
-    let currentUserId: UUID?
-    let index: Int
-    let rotationAngle: Double
-    @State private var showArrowAnimation = false
+    let from: User
+    let to: User
+    let amount: Double
+    @State private var isMarkedAsPaid = false
 
     var body: some View {
-        VStack(spacing: 20) {
-            HStack(spacing: 30) {
-                UserBubble(
-                    user: settlement.from,
-                    color: Color.theme.danger,
-                    isDebtor: true
-                )
-
-                VStack(spacing: 10) {
-                    Image(systemName: "arrow.right.circle.fill")
-                        .font(.system(size: 40))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                startPoint: .top,
-                                endPoint: .bottom
+        ProfessionalCard {
+            VStack(alignment: .leading, spacing: ProfessionalDesignSystem.Spacing.md) {
+                // Payment direction
+                HStack(spacing: ProfessionalDesignSystem.Spacing.md) {
+                    // From user
+                    VStack(alignment: .center, spacing: ProfessionalDesignSystem.Spacing.xs) {
+                        Circle()
+                            .fill(ProfessionalDesignSystem.Colors.danger.opacity(0.2))
+                            .frame(width: 50, height: 50)
+                            .overlay(
+                                Text(String(from.name.prefix(1).uppercased()))
+                                    .font(ProfessionalDesignSystem.Typography.headline)
+                                    .foregroundColor(ProfessionalDesignSystem.Colors.danger)
                             )
-                        )
-                        .shadow(color: Color.theme.electricBlue.opacity(0.3), radius: 5)
-                        .offset(x: showArrowAnimation ? 10 : -10)
 
-                    Text("$\(String(format: "%.2f", settlement.amount))")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Color.theme.electricBlue, Color.theme.brightCyan],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                        Text(from.name)
+                            .font(ProfessionalDesignSystem.Typography.caption)
+                            .foregroundColor(ProfessionalDesignSystem.Colors.textSecondary)
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    // Arrow with amount
+                    VStack(spacing: ProfessionalDesignSystem.Spacing.xs) {
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(ProfessionalDesignSystem.Colors.primaryBlue)
+
+                        Text(String(format: "$%.2f", amount))
+                            .font(ProfessionalDesignSystem.Typography.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(ProfessionalDesignSystem.Colors.primaryBlue)
+                    }
+
+                    // To user
+                    VStack(alignment: .center, spacing: ProfessionalDesignSystem.Spacing.xs) {
+                        Circle()
+                            .fill(ProfessionalDesignSystem.Colors.success.opacity(0.2))
+                            .frame(width: 50, height: 50)
+                            .overlay(
+                                Text(String(to.name.prefix(1).uppercased()))
+                                    .font(ProfessionalDesignSystem.Typography.headline)
+                                    .foregroundColor(ProfessionalDesignSystem.Colors.success)
                             )
-                        )
+
+                        Text(to.name)
+                            .font(ProfessionalDesignSystem.Typography.caption)
+                            .foregroundColor(ProfessionalDesignSystem.Colors.textSecondary)
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity)
                 }
 
-                UserBubble(
-                    user: settlement.to,
-                    color: Color.theme.brightCyan,
-                    isDebtor: false
-                )
-            }
+                // Mark as paid button
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isMarkedAsPaid.toggle()
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: isMarkedAsPaid ? "checkmark.circle.fill" : "circle")
+                            .foregroundColor(isMarkedAsPaid ? ProfessionalDesignSystem.Colors.success : ProfessionalDesignSystem.Colors.textTertiary)
 
-            if isCurrentUser {
-                HStack {
-                    Image(systemName: "info.circle.fill")
-                        .foregroundColor(Color.theme.electricBlue.opacity(0.7))
-                    Text(settlement.from.id == currentUserId
-                         ? "You owe \(settlement.to.name)"
-                         : "\(settlement.from.name) owes you")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundColor(.primary)
+                        Text(isMarkedAsPaid ? "Marked as paid" : "Mark as paid")
+                            .font(ProfessionalDesignSystem.Typography.callout)
+                            .foregroundColor(isMarkedAsPaid ? ProfessionalDesignSystem.Colors.success : ProfessionalDesignSystem.Colors.textSecondary)
+
+                        Spacer()
+                    }
+                    .padding(ProfessionalDesignSystem.Spacing.sm)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(isMarkedAsPaid ? ProfessionalDesignSystem.Colors.success.opacity(0.1) : ProfessionalDesignSystem.Colors.cardBackground.opacity(0.5))
+                    )
                 }
-                .padding(.horizontal, 15)
-                .padding(.vertical, 10)
-                .background(
-                    Color.theme.darkNavy.opacity(0.3)
-                )
-                .cornerRadius(12)
+                .buttonStyle(PlainButtonStyle())
             }
         }
-        .padding(25)
-        .frame(maxWidth: .infinity)
-        .glassCard(cornerRadius: 25)
-        .overlay(
-            RoundedRectangle(cornerRadius: 25)
-                .stroke(
-                    LinearGradient(
-                        colors: isCurrentUser
-                            ? [Color.theme.brightCyan.opacity(0.5), Color.theme.electricBlue.opacity(0.3)]
-                            : [Color.white.opacity(0.3), Color.white.opacity(0.1)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: isCurrentUser ? 2 : 1
-                )
-        )
-        .shadow(
-            color: isCurrentUser
-                ? Color.theme.electricBlue.opacity(0.2)
-                : Color.black.opacity(0.1),
-            radius: 15,
-            x: 0,
-            y: 8
-        )
-        .rotationEffect(.degrees(rotationAngle))
-        .onAppear {
-            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
-                showArrowAnimation = true
-            }
-        }
+        .opacity(isMarkedAsPaid ? 0.7 : 1.0)
     }
 }
 
-struct UserBubble: View {
-    let user: User
-    let color: Color
-    let isDebtor: Bool
-    @State private var showPulse = false
-
+struct EmptySettlementsState: View {
     var body: some View {
-        VStack(spacing: 8) {
-            ZStack {
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                color.opacity(0.3),
-                                color.opacity(0.1)
-                            ],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 40
-                        )
-                    )
-                    .frame(width: 80, height: 80)
-                    .scaleEffect(showPulse ? 1.15 : 1.0)
-                    .opacity(showPulse ? 0.5 : 1.0)
+        VStack(spacing: ProfessionalDesignSystem.Spacing.md) {
+            Image(systemName: "checkmark.seal")
+                .font(.system(size: 48))
+                .foregroundColor(ProfessionalDesignSystem.Colors.success)
 
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 60))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [color, color.opacity(0.7)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .shadow(color: color.opacity(0.3), radius: 5)
-            }
+            Text("All settled up!")
+                .font(ProfessionalDesignSystem.Typography.headline)
+                .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
 
-            Text(user.name)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                .foregroundColor(.primary)
-                .lineLimit(1)
+            Text("No payments needed at this time")
+                .font(ProfessionalDesignSystem.Typography.body)
+                .foregroundColor(ProfessionalDesignSystem.Colors.textSecondary)
+                .multilineTextAlignment(.center)
         }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true).delay(Double.random(in: 0...0.5))) {
-                showPulse = true
-            }
-        }
+        .frame(maxWidth: .infinity)
     }
 }
 
 #Preview {
-    SettlementsView()
-        .environmentObject(SessionManager())
+    ZStack {
+        ProfessionalBackground()
+        SettlementsView()
+    }
+    .environmentObject(SessionManager())
+    .preferredColorScheme(.dark)
 }
