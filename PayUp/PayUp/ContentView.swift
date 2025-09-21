@@ -1,10 +1,12 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var sessionManager = SessionManager()
+    @EnvironmentObject var sessionManager: SessionManager
+    @EnvironmentObject var subscriptionManager: SubscriptionManager
     @State private var showingCreateSession = false
     @State private var showingJoinSession = false
     @State private var showLaunchScreen = true
+    @State private var showingReceiptScanner = false
 
     var body: some View {
         ZStack {
@@ -26,6 +28,15 @@ struct ContentView: View {
             .sheet(isPresented: $showingJoinSession) {
                 JoinSessionView()
                     .environmentObject(sessionManager)
+            }
+            .sheet(isPresented: $subscriptionManager.showPaywall) {
+                PaywallView()
+                    .environmentObject(subscriptionManager)
+            }
+            .sheet(isPresented: $showingReceiptScanner) {
+                ReceiptScannerView()
+                    .environmentObject(sessionManager)
+                    .environmentObject(subscriptionManager)
             }
             .opacity(showLaunchScreen ? 0 : 1)
             .animation(.easeIn(duration: 0.5), value: showLaunchScreen)

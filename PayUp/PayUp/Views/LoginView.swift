@@ -11,21 +11,21 @@ struct LoginView: View {
             ZStack {
                 ProfessionalBackground()
 
-                VStack(spacing: ProfessionalDesignSystem.Spacing.xl) {
+                VStack(spacing: LiquidGlassUI.Spacing.xl) {
                     Spacer()
 
                     // Title
                     Text("Sign In")
-                        .font(ProfessionalDesignSystem.Typography.title)
-                        .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
+                        .font(LiquidGlassUI.Typography.title)
+                        .foregroundColor(LiquidGlassUI.Colors.textPrimary)
                         .opacity(isAnimating ? 1 : 0)
 
                     // Form fields
-                    VStack(spacing: ProfessionalDesignSystem.Spacing.lg) {
-                        VStack(alignment: .leading, spacing: ProfessionalDesignSystem.Spacing.sm) {
+                    VStack(spacing: LiquidGlassUI.Spacing.lg) {
+                        VStack(alignment: .leading, spacing: LiquidGlassUI.Spacing.sm) {
                             Text("Email")
-                                .font(ProfessionalDesignSystem.Typography.caption)
-                                .foregroundColor(ProfessionalDesignSystem.Colors.textSecondary)
+                                .font(LiquidGlassUI.Typography.caption)
+                                .foregroundColor(LiquidGlassUI.Colors.textSecondary)
 
                             TextField("name@example.com", text: $email)
                                 .keyboardType(.emailAddress)
@@ -36,10 +36,10 @@ struct LoginView: View {
                         .opacity(isAnimating ? 1 : 0)
                         .offset(y: isAnimating ? 0 : 20)
 
-                        VStack(alignment: .leading, spacing: ProfessionalDesignSystem.Spacing.sm) {
+                        VStack(alignment: .leading, spacing: LiquidGlassUI.Spacing.sm) {
                             Text("Password")
-                                .font(ProfessionalDesignSystem.Typography.caption)
-                                .foregroundColor(ProfessionalDesignSystem.Colors.textSecondary)
+                                .font(LiquidGlassUI.Typography.caption)
+                                .foregroundColor(LiquidGlassUI.Colors.textSecondary)
 
                             SecureField("Enter your password", text: $password)
                                 .textFieldStyle(ProfessionalTextFieldStyle())
@@ -48,12 +48,12 @@ struct LoginView: View {
                         .offset(y: isAnimating ? 0 : 20)
                         .animation(.easeOut(duration: 0.4).delay(0.1), value: isAnimating)
                     }
-                    .padding(.horizontal, ProfessionalDesignSystem.Spacing.xl)
+                    .padding(.horizontal, LiquidGlassUI.Spacing.xl)
 
                     Spacer()
 
                     // Action buttons
-                    VStack(spacing: ProfessionalDesignSystem.Spacing.md) {
+                    VStack(spacing: LiquidGlassUI.Spacing.md) {
                         PrimaryButton("Sign In") {
                             // Non-functional: just dismiss for now
                             dismiss()
@@ -68,13 +68,13 @@ struct LoginView: View {
                             // Placeholder for password reset
                         } label: {
                             Text("Forgot password?")
-                                .font(ProfessionalDesignSystem.Typography.caption)
-                                .foregroundColor(ProfessionalDesignSystem.Colors.primaryBlue)
+                                .font(LiquidGlassUI.Typography.caption)
+                                .foregroundColor(LiquidGlassUI.Colors.neonBlue)
                         }
-                        .padding(.top, ProfessionalDesignSystem.Spacing.sm)
+                        .padding(.top, LiquidGlassUI.Spacing.sm)
                     }
-                    .padding(.horizontal, ProfessionalDesignSystem.Spacing.xl)
-                    .padding(.bottom, ProfessionalDesignSystem.Spacing.xl)
+                    .padding(.horizontal, LiquidGlassUI.Spacing.xl)
+                    .padding(.bottom, LiquidGlassUI.Spacing.xl)
                 }
             }
             .navigationTitle("Sign In")
@@ -82,7 +82,7 @@ struct LoginView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
-                        .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
+                        .foregroundColor(LiquidGlassUI.Colors.textPrimary)
                 }
             }
             .toolbarBackground(.hidden, for: .navigationBar)
@@ -99,17 +99,17 @@ struct LoginView: View {
 struct ProfessionalTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
-            .padding(ProfessionalDesignSystem.Spacing.md)
+            .padding(LiquidGlassUI.Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(ProfessionalDesignSystem.Colors.cardBackground)
+                    .fill(LiquidGlassUI.Colors.deepOcean.opacity(0.6))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(ProfessionalDesignSystem.Colors.divider, lineWidth: 0.5)
+                            .stroke(LiquidGlassUI.Colors.divider, lineWidth: 0.5)
                     )
             )
-            .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
-            .font(ProfessionalDesignSystem.Typography.body)
+            .foregroundColor(LiquidGlassUI.Colors.textPrimary)
+            .font(LiquidGlassUI.Typography.body)
     }
 }
 

@@ -11,34 +11,60 @@ PayUp is an iOS app built with SwiftUI for tracking IOUs between friends during 
 - **Balance Calculation**: Real-time balance tracking showing who owes whom
 - **Smart Settlements**: Optimized payment suggestions to settle all debts with minimum transactions
 - **Local Persistence**: Data saved using UserDefaults
+- **Premium Subscriptions**: Tiered subscription model with StoreKit integration
+- **Receipt Scanning**: OCR-powered receipt scanning with Vision framework
+- **Payment Integration**: Framework for direct payments through popular services
 
 ### Data Models
 - `User`: Tracks participants with unique device IDs
 - `Transaction`: Records payments with payer, beneficiaries, and amounts
 - `Session`: Container for users and transactions with unique session keys
 - `SessionManager`: ObservableObject managing app state
+- `Subscription`: Premium tier system (Free, Premium, Pro, Business)
+- `SubscriptionManager`: Handles StoreKit purchases and subscription status
+- `EnhancedTransaction`: Extended transaction model with categories and receipts
 
-## Design System
+## Design System - LiquidGlassUI (iOS 26 Style)
 
-### Color Theme (Blue Liquid Wallpaper)
-- **Space Black** (#000000) - Deep background
-- **Bright Cyan** (#00BFFF) - Primary accent color
-- **Electric Blue** (#0080FF) - Secondary accent
-- **Dark Navy** (#001840) - Card surfaces
-- **Spark Orange** (#FF6B35) - Danger/debt color
-- **Pure White** - High contrast text on dark surfaces
+### Color Theme (Liquid Glass - iOS 26 Apple Music Style)
+- **Deep Ocean** (#000814) - Base background
+- **Midnight Blue** (#001D3D) - Secondary background
+- **Neon Cyan** (#00F0FF) - Primary accent
+- **Neon Blue** (#3366FF) - Secondary accent  
+- **Neon Purple** (#9933FF) - Tertiary accent
+- **Pure White** - Primary text on dark surfaces
 
 ### UI Components
-- **WallpaperBackground**: Simulated liquid flow effect with wave shapes
-- **GlassCard**: Semi-transparent cards with blur effects
-- **ReadableGlassCard**: Enhanced glass cards with better text contrast
+- **LiquidGlassBackground**: Multi-layered animated liquid flow effect
+- **LiquidGlassNavigationBar**: iOS 26 Apple Music-style frosted navigation
+- **PremiumGlassCard**: Multi-layer glass cards with shimmer effects
+- **GlassTabBar**: iOS 26-style tab bar with liquid indicator
+- **LiquidButton**: Buttons with ripple animations and dynamic fills
+- **GlassTextField**: Text fields with focus glow states
 
-### Visual Features
-- Glassmorphism effects with semi-transparent overlays
-- Animated wave backgrounds mimicking liquid flow
-- Pulsing animations for important elements
-- Gradient text for numbers and titles
-- Dark theme with high contrast for readability
+### Visual Features (iOS 26)
+- Ultra-thin material base layers
+- Multi-layered liquid glass effects
+- Subtle shimmer and glow animations
+- Matched geometry effects for smooth transitions
+- Frosted glass with proper blur layers
+- iOS 26 separator lines with animated glows
+
+## Premium Features & Monetization
+
+### Subscription Tiers
+1. **Free**: 3 sessions, 10 members max, basic features
+2. **Premium ($4.99/mo)**: Unlimited sessions, cloud sync, analytics, receipt scanning
+3. **Pro ($9.99/mo)**: Payment integration, AI features, multi-currency
+4. **Business ($29.99/mo)**: Team management, accounting integration
+
+### Key Premium Features
+- **Receipt Scanner**: OCR text extraction using Vision framework
+- **Advanced Analytics**: Spending insights and trends
+- **Cloud Sync**: Cross-device synchronization
+- **Payment Integration**: Direct settlement through payment apps
+- **Custom Themes**: Personalization options
+- **Multi-Currency**: Real-time exchange rates
 
 ## Project Structure
 ```
@@ -46,100 +72,85 @@ PayUp/
 ├── Models/
 │   ├── User.swift
 │   ├── Transaction.swift
-│   └── Session.swift
+│   ├── Session.swift
+│   ├── Subscription.swift
+│   ├── EnhancedTransaction.swift
+│   ├── Budget.swift
+│   ├── Category.swift
+│   └── Receipt.swift
 ├── ViewModels/
-│   └── SessionManager.swift
+│   ├── SessionManager.swift
+│   └── SubscriptionManager.swift
 ├── Views/
 │   ├── WelcomeView.swift
 │   ├── SessionDashboardView.swift
+│   ├── PaywallView.swift
+│   ├── ReceiptScannerView.swift
 │   ├── TransactionsListView.swift
 │   ├── BalancesView.swift
 │   ├── SettlementsView.swift
 │   ├── AddTransactionView.swift
 │   ├── CreateSessionView.swift
 │   ├── JoinSessionView.swift
-│   └── SessionInfoView.swift
+│   ├── SessionInfoView.swift
+│   ├── BudgetView.swift
+│   └── AnalyticsView.swift
 ├── Components/
-│   ├── WallpaperBackground.swift
-│   └── GlassBackground.swift
+│   └── LiquidGlassUI.swift
+├── Extensions/
+│   └── Color+Hex.swift (removed - exists in ColorTheme.swift)
 └── Theme/
     └── ColorTheme.swift
 ```
 
-## Key Implementation Details
+## Recent Updates (December 2024)
 
-### Session Keys
-- 6-character alphanumeric codes (e.g., "ABC123")
-- Generated randomly when creating sessions
-- Case-insensitive for joining
+### iOS 26 Liquid Glass UI Implementation
+- **Navigation Bar**: Matches iOS 26 Apple Music style with ultra-thin materials
+- **Tab Bar**: Liquid indicator with matched geometry effects
+- **Glass Effects**: Multi-layered frosted glass throughout
+- **Animations**: Subtle liquid flow and shimmer effects
 
-### Balance Calculation Algorithm
-- Tracks net balance for each user
-- Positive balance = money owed to user
-- Negative balance = user owes money
-- Automatic settlement optimization to minimize transactions
+### Monetization Implementation
+- **StoreKit Integration**: Complete in-app purchase system
+- **Subscription Management**: Usage tracking and feature gates
+- **Premium Paywall**: Beautiful upgrade flow
+- **Receipt Scanner**: Fully functional OCR implementation
 
-### UI/UX Principles
-- Dark theme with bright cyan accents for visibility
-- White text on dark surfaces for maximum readability
-- Glass effects subtle enough not to interfere with content
-- Smooth animations with spring physics
-- Cards with strong shadows for depth perception
+### Bug Fixes
+- Fixed `ReceiptItem` naming conflicts (renamed to `ScannedReceiptItem`)
+- Resolved StoreKit Transaction type conflicts
+- Fixed deprecated UIScreen.main usage
+- Replaced all ProfessionalDesignSystem references with LiquidGlassUI
+- Fixed missing color references (primaryBlue → neonBlue, cardBackground → deepOcean)
+- Added Color+Hex extension functionality
 
 ## Development Notes
 - Built with SwiftUI and iOS 17+ features
 - Uses @MainActor for SessionManager to ensure UI updates on main thread
-- Imports UIKit for UIDevice access (device ID generation)
 - NavigationStack for modern navigation
-- TabView for main dashboard navigation
+- TabView with custom liquid glass tab bar
 - Bundle identifier: com.payup.PayUp
-
-## Recent Updates
-- **Launch Screen**: Animated LaunchScreenView with liquid edge effects
-  - 1-second duration with cyclical animations
-  - Glowing cyan/blue edges that slide in from all sides
-  - Pulsing center logo with continuous rotation
-  - Corner accent decorations with spring animations
-- **App Icon**: Configured for App Store submission
-  - Must be RGB format without alpha channel (no transparency)
-  - 1024x1024 PNG required for App Store
-  - Current icon: "Payup 3 Default_fixed.png"
-- **Liquid Glass Design System**: Complete UI overhaul with advanced glass morphism
-  - Created `LiquidGlassDesignSystem.swift` with reusable components
-  - iOS 17+ Material types (ultraThin, thin, regular, thick, chrome)
-  - LiquidBackground with multi-layered animated waves
-  - LiquidGlassCard with shimmer effects
-  - FrostedGlassButton with glow animations
-  - FloatingGlassButton with ripple effects
-  - LiquidText with animated gradients
-- **Simplified UI Architecture**:
-  - Redesigned WelcomeView with glass orb logo
-  - Streamlined SessionDashboardView with custom tab bar
-  - Enhanced TransactionsListView with expandable cards
-  - Removed complex UI elements for cleaner design
-  - Consistent use of SwiftUI Materials throughout
-- **Animation Enhancements**:
-  - Liquid wave animations with varying phases
-  - Shimmer effects on glass surfaces
-  - Continuous rotation and pulse animations
-  - Spring physics for natural motion
-  - Ripple effects on interactive elements
-- **Bug Fixes**:
-  - Fixed gradient stop location ordering in LiquidGlassEffects
-  - Added bounds checking and sorting to ensure gradients render correctly
-  - Resolved Material type compatibility issues
+- StoreKit 2 for subscriptions
+- Vision framework for OCR
+- Minimum deployment target: iOS 17.0
 
 ## Testing Considerations
 - Test session creation and joining flows
 - Verify balance calculations with multiple transactions
 - Check settlement algorithm optimization
-- Ensure data persistence across app launches
+- Test subscription purchase flow
+- Verify receipt scanner accuracy
+- Ensure feature gates work properly
 - Test with various numbers of participants
 
-## Future Enhancements (Potential)
-- Cloud sync using CloudKit or Firebase
-- Real-time updates between devices
-- Payment integration (Venmo, PayPal, etc.)
-- Transaction history and receipts
-- Group expense categories
-- Currency conversion support
+## Build Status
+✅ **BUILD SUCCESSFUL** - All compilation errors resolved
+
+## Important Instructions
+- Always use LiquidGlassUI design system for consistency
+- Maintain iOS 26 liquid glass aesthetic throughout
+- Follow established patterns for new features
+- Test premium feature gates before release
+- Ensure proper error handling for purchases
+- Never expose subscription keys or secrets

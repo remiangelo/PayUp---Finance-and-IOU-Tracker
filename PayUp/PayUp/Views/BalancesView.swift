@@ -25,34 +25,34 @@ struct BalancesView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: ProfessionalDesignSystem.Spacing.lg) {
+            VStack(spacing: LiquidGlassUI.Spacing.lg) {
                 // Summary Card
                 if !balances.isEmpty {
                     ProfessionalCard {
-                        VStack(spacing: ProfessionalDesignSystem.Spacing.md) {
+                        VStack(spacing: LiquidGlassUI.Spacing.md) {
                             Text("Balance Summary")
-                                .font(ProfessionalDesignSystem.Typography.headline)
-                                .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
+                                .font(LiquidGlassUI.Typography.headline)
+                                .foregroundColor(LiquidGlassUI.Colors.textPrimary)
 
-                            HStack(spacing: ProfessionalDesignSystem.Spacing.xl) {
-                                VStack(alignment: .leading, spacing: ProfessionalDesignSystem.Spacing.xs) {
+                            HStack(spacing: LiquidGlassUI.Spacing.xl) {
+                                VStack(alignment: .leading, spacing: LiquidGlassUI.Spacing.xs) {
                                     Text("To Receive")
-                                        .font(ProfessionalDesignSystem.Typography.caption)
-                                        .foregroundColor(ProfessionalDesignSystem.Colors.textTertiary)
+                                        .font(LiquidGlassUI.Typography.caption)
+                                        .foregroundColor(LiquidGlassUI.Colors.textTertiary)
                                     Text(String(format: "$%.2f", totalPositive))
-                                        .font(ProfessionalDesignSystem.Typography.title)
-                                        .foregroundColor(ProfessionalDesignSystem.Colors.success)
+                                        .font(LiquidGlassUI.Typography.title)
+                                        .foregroundColor(LiquidGlassUI.Colors.success)
                                 }
 
                                 Spacer()
 
-                                VStack(alignment: .trailing, spacing: ProfessionalDesignSystem.Spacing.xs) {
+                                VStack(alignment: .trailing, spacing: LiquidGlassUI.Spacing.xs) {
                                     Text("To Pay")
-                                        .font(ProfessionalDesignSystem.Typography.caption)
-                                        .foregroundColor(ProfessionalDesignSystem.Colors.textTertiary)
+                                        .font(LiquidGlassUI.Typography.caption)
+                                        .foregroundColor(LiquidGlassUI.Colors.textTertiary)
                                     Text(String(format: "$%.2f", totalNegative))
-                                        .font(ProfessionalDesignSystem.Typography.title)
-                                        .foregroundColor(ProfessionalDesignSystem.Colors.danger)
+                                        .font(LiquidGlassUI.Typography.title)
+                                        .foregroundColor(LiquidGlassUI.Colors.danger)
                                 }
                             }
                         }
@@ -61,11 +61,11 @@ struct BalancesView: View {
                 }
 
                 // Individual Balances
-                VStack(alignment: .leading, spacing: ProfessionalDesignSystem.Spacing.md) {
+                VStack(alignment: .leading, spacing: LiquidGlassUI.Spacing.md) {
                     if !balances.isEmpty {
                         Text("Individual Balances")
-                            .font(ProfessionalDesignSystem.Typography.headline)
-                            .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
+                            .font(LiquidGlassUI.Typography.headline)
+                            .foregroundColor(LiquidGlassUI.Colors.textPrimary)
                             .padding(.horizontal)
                     }
 
@@ -83,9 +83,9 @@ struct BalancesView: View {
                         }
                     }
                 }
-                .padding(.top, ProfessionalDesignSystem.Spacing.sm)
+                .padding(.top, LiquidGlassUI.Spacing.sm)
             }
-            .padding(.top, ProfessionalDesignSystem.Spacing.md)
+            .padding(.top, LiquidGlassUI.Spacing.md)
             .padding(.bottom, 120) // Space for tab bar
         }
         .background(Color.clear)
@@ -99,11 +99,11 @@ struct BalanceRow: View {
 
     private var balanceColor: Color {
         if balance > 0.01 {
-            return ProfessionalDesignSystem.Colors.success
+            return LiquidGlassUI.Colors.success
         } else if balance < -0.01 {
-            return ProfessionalDesignSystem.Colors.danger
+            return LiquidGlassUI.Colors.danger
         } else {
-            return ProfessionalDesignSystem.Colors.textSecondary
+            return LiquidGlassUI.Colors.textSecondary
         }
     }
 
@@ -121,33 +121,33 @@ struct BalanceRow: View {
         ProfessionalCard {
             HStack {
                 // User info
-                HStack(spacing: ProfessionalDesignSystem.Spacing.sm) {
+                HStack(spacing: LiquidGlassUI.Spacing.sm) {
                     Circle()
-                        .fill(ProfessionalDesignSystem.Colors.primaryBlue.opacity(0.2))
+                        .fill(LiquidGlassUI.Colors.neonBlue.opacity(0.2))
                         .frame(width: 40, height: 40)
                         .overlay(
                             Text(String(user.name.prefix(1).uppercased()))
-                                .font(ProfessionalDesignSystem.Typography.headline)
-                                .foregroundColor(ProfessionalDesignSystem.Colors.primaryBlue)
+                                .font(LiquidGlassUI.Typography.headline)
+                                .foregroundColor(LiquidGlassUI.Colors.neonBlue)
                         )
 
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 4) {
                             Text(user.name)
-                                .font(ProfessionalDesignSystem.Typography.body)
+                                .font(LiquidGlassUI.Typography.body)
                                 .fontWeight(.medium)
-                                .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
+                                .foregroundColor(LiquidGlassUI.Colors.textPrimary)
 
                             if isCurrentUser {
                                 Text("(You)")
-                                    .font(ProfessionalDesignSystem.Typography.caption)
-                                    .foregroundColor(ProfessionalDesignSystem.Colors.primaryBlue)
+                                    .font(LiquidGlassUI.Typography.caption)
+                                    .foregroundColor(LiquidGlassUI.Colors.neonBlue)
                             }
                         }
 
                         Text(statusText)
-                            .font(ProfessionalDesignSystem.Typography.caption)
-                            .foregroundColor(ProfessionalDesignSystem.Colors.textTertiary)
+                            .font(LiquidGlassUI.Typography.caption)
+                            .foregroundColor(LiquidGlassUI.Colors.textTertiary)
                     }
                 }
 
@@ -155,7 +155,7 @@ struct BalanceRow: View {
 
                 // Balance amount
                 Text(String(format: "$%.2f", abs(balance)))
-                    .font(ProfessionalDesignSystem.Typography.headline)
+                    .font(LiquidGlassUI.Typography.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(balanceColor)
             }
@@ -165,20 +165,20 @@ struct BalanceRow: View {
 
 struct EmptyBalanceState: View {
     var body: some View {
-        VStack(spacing: ProfessionalDesignSystem.Spacing.md) {
+        VStack(spacing: LiquidGlassUI.Spacing.md) {
             Image(systemName: "chart.pie")
                 .font(.system(size: 48))
-                .foregroundColor(ProfessionalDesignSystem.Colors.textTertiary)
+                .foregroundColor(LiquidGlassUI.Colors.textTertiary)
 
             Text("No balances yet")
-                .font(ProfessionalDesignSystem.Typography.headline)
-                .foregroundColor(ProfessionalDesignSystem.Colors.textPrimary)
+                .font(LiquidGlassUI.Typography.headline)
+                .foregroundColor(LiquidGlassUI.Colors.textPrimary)
 
             Text("Balances will appear once transactions are added")
-                .font(ProfessionalDesignSystem.Typography.body)
-                .foregroundColor(ProfessionalDesignSystem.Colors.textSecondary)
+                .font(LiquidGlassUI.Typography.body)
+                .foregroundColor(LiquidGlassUI.Colors.textSecondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, ProfessionalDesignSystem.Spacing.xl)
+                .padding(.horizontal, LiquidGlassUI.Spacing.xl)
         }
         .frame(maxWidth: .infinity)
     }

@@ -5,7 +5,7 @@ struct TransactionsListView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: ProfessionalDesignSystem.Spacing.md) {
+            VStack(spacing: LiquidGlassUI.Spacing.md) {
                 if sessionManager.currentSession?.transactions.isEmpty ?? true {
                     EmptyTransactionState()
                         .padding(.top, 100)
@@ -14,7 +14,7 @@ struct TransactionsListView: View {
                         TransactionCard(transaction: transaction)
                             .padding(.horizontal)
                     }
-                    .padding(.top, ProfessionalDesignSystem.Spacing.md)
+                    .padding(.top, LiquidGlassUI.Spacing.md)
                 }
             }
             .padding(.bottom, 120) // Space for tab bar and FAB

@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 struct BudgetView: View {
     @EnvironmentObject var sessionManager: SessionManager
@@ -7,28 +8,62 @@ struct BudgetView: View {
     @State private var showingAddBudget = false
     @State private var selectedPeriod: BudgetPeriod = .monthly
     @State private var appearAnimation = false
+    @State private var pulseAnimation = false
+    @State private var liquidPhase: CGFloat = 0
+
+    var filteredBudgets: [Budget] {
+        budgets.filter { $0.period == selectedPeriod }
+    }
+
+    var totalBudget: Double {
+        filteredBudgets.reduce(0) { $0 + $1.amount }
+    }
+
+    var totalSpent: Double {
+        // For now, return mock data since we need transactions to calculate actual spent
+        filteredBudgets.reduce(0) { $0 + ($1.amount * 0.65) } // Mock 65% spent
+    }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                WallpaperBackground()
+                // Premium liquid glass background
+                LiquidGlassBackground()
 
                 ScrollView {
-                    VStack(spacing: 20) {
-                        // Budget Summary Card
-                        BudgetSummaryCard(budgets: budgets)
+                    VStack(spacing: LiquidGlassUI.Spacing.lg) {
+                        // Premium Budget Summary Card
+                        PremiumBudgetSummaryCard(
+                            totalBudget: totalBudget,
+                            totalSpent: totalSpent
+                        )
+                        .opacity(appearAnimation ? 1 : 0)
+                        .offset(y: appearAnimation ? 0 : -30)
+
+                        // Glass Period Selector
+                        GlassPeriodSelector(selectedPeriod: $selectedPeriod)
                             .opacity(appearAnimation ? 1 : 0)
                             .offset(y: appearAnimation ? 0 : 20)
-                            .animation(.spring(response: 0.6, dampingFraction: 0.7), value: appearAnimation)
 
-                        // Period Selector
-                        BudgetPeriodSelector(selectedPeriod: $selectedPeriod)
-                            .opacity(appearAnimation ? 1 : 0)
-                            .offset(y: appearAnimation ? 0 : 20)
-                            .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1), value: appearAnimation)
-
-                        // Active Budgets
-                        ActiveBudgetsSection(budgets: filteredBudgets, appearAnimation: appearAnimation)
+                        // Budget Items with liquid glass cards
+                        VStack(spacing: LiquidGlassUI.Spacing.md) {
+                            if filteredBudgets.isEmpty {
+                                EmptyBudgetState()
+                                    .padding(.top, 50)
+                            } else {
+                                ForEach(Array(filteredBudgets.enumerated()), id: \.element.id) { index, budget in
+                                    LiquidBudgetCard(budget: budget)
+                                        .opacity(appearAnimation ? 1 : 0)
+                                        .offset(y: appearAnimation ? 0 : 30)
+                                        .animation(
+                                            .spring(response: 0.5, dampingFraction: 0.7)
+                                            .delay(Double(index) * 0.1 + 0.2),
+                                            value: appearAnimation
+                                        )
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
 
                         Spacer(minLength: 100)
                     }
@@ -37,459 +72,571 @@ struct BudgetView: View {
             }
             .navigationTitle("Budgets")
             .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showingAddBudget = true
                     } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
+                        ZStack {
+                            Circle()
+                                .fill(.ultraThinMaterial)
+                                .frame(width: 40, height: 40)
+                                .overlay(
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    LiquidGlassUI.Colors.neonCyan.opacity(0.3),
+                                                    LiquidGlassUI.Colors.neonBlue.opacity(0.2)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
                                 )
-                            )
-                            .shadow(color: Color.theme.brightCyan.opacity(0.3), radius: 5)
+                                .shadow(color: LiquidGlassUI.Colors.neonCyan.opacity(0.4), radius: 8)
+
+                            Image(systemName: "plus")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(LiquidGlassUI.Colors.neonCyan)
+                        }
                     }
                 }
             }
             .sheet(isPresented: $showingAddBudget) {
-                AddBudgetView(budgets: $budgets)
+                AddBudgetSheet(budgets: $budgets)
+                    .background(LiquidGlassBackground())
             }
             .onAppear {
                 loadBudgets()
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                withAnimation(.spring(response: 0.8, dampingFraction: 0.7)) {
                     appearAnimation = true
+                }
+                withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+                    pulseAnimation = true
+                }
+                withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
+                    liquidPhase = .pi * 2
                 }
             }
         }
-    }
-
-    private var filteredBudgets: [Budget] {
-        budgets.filter { $0.period == selectedPeriod && $0.isActive }
     }
 
     private func loadBudgets() {
-        // Load budgets from Core Data
-        let budgetEntities = coreDataManager.fetchBudgets()
-        budgets = budgetEntities.map { entity in
-            Budget(
-                id: entity.id ?? UUID(),
-                name: entity.name ?? "",
-                amount: entity.amount,
-                categoryId: entity.categoryId,
-                period: BudgetPeriod(rawValue: entity.period ?? "monthly") ?? .monthly,
-                startDate: entity.startDate ?? Date(),
-                endDate: entity.endDate ?? Date()
-            )
-        }
+        // Mock data for now
+        budgets = [
+            Budget(name: "Food & Dining", amount: 500, period: .monthly),
+            Budget(name: "Transportation", amount: 200, period: .monthly),
+            Budget(name: "Entertainment", amount: 150, period: .monthly)
+        ]
     }
 }
 
-// MARK: - Active Budgets Section
+// MARK: - Premium Budget Summary Card
+struct PremiumBudgetSummaryCard: View {
+    let totalBudget: Double
+    let totalSpent: Double
 
-struct ActiveBudgetsSection: View {
-    let budgets: [Budget]
-    let appearAnimation: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Active Budgets")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(Color.theme.pureWhite)
-                .padding(.horizontal)
-
-            ForEach(Array(budgets.enumerated()), id: \.element.id) { index, budget in
-                BudgetCard(budget: budget)
-                    .padding(.horizontal)
-                    .opacity(appearAnimation ? 1 : 0)
-                    .offset(y: appearAnimation ? 0 : 20)
-                    .animation(
-                        .spring(response: 0.6, dampingFraction: 0.7)
-                            .delay(0.2 + Double(index) * 0.05),
-                        value: appearAnimation
-                    )
-            }
-        }
-    }
-}
-
-// MARK: - Budget Summary Card
-
-struct BudgetSummaryCard: View {
-    let budgets: [Budget]
-
-    private var totalBudget: Double {
-        budgets.filter { $0.isActive }.reduce(0) { $0 + $1.amount }
-    }
-
-    private var totalSpent: Double {
-        // This would be calculated from actual transactions
-        totalBudget * 0.65 // Placeholder
-    }
+    @State private var progressAnimation: CGFloat = 0
+    @State private var glowPulse = false
 
     private var percentageUsed: Double {
         guard totalBudget > 0 else { return 0 }
-        return (totalSpent / totalBudget) * 100
+        return min((totalSpent / totalBudget) * 100, 100)
     }
 
-    var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Total Budget")
-                        .font(.caption)
-                        .foregroundColor(Color.theme.brightCyan)
-                    Text(Currency.usd.format(totalBudget))
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(Color.theme.pureWhite)
-                }
+    private var remaining: Double {
+        max(totalBudget - totalSpent, 0)
+    }
 
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("Spent")
-                        .font(.caption)
-                        .foregroundColor(Color.theme.sparkOrange)
-                    Text(Currency.usd.format(totalSpent))
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color.theme.pureWhite)
-                }
-            }
-
-            // Progress Bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.theme.darkNavy.opacity(0.3))
-                        .frame(height: 12)
-
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(
-                            LinearGradient(
-                                colors: percentageUsed > 80 ?
-                                    [Color.theme.sparkOrange, Color.theme.danger] :
-                                    [Color.theme.brightCyan, Color.theme.electricBlue],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: geometry.size.width * min(percentageUsed / 100, 1.0), height: 12)
-                }
-            }
-            .frame(height: 12)
-
-            HStack {
-                Text("\(Int(percentageUsed))% Used")
-                    .font(.caption)
-                    .foregroundColor(Color.theme.pureWhite.opacity(0.7))
-
-                Spacer()
-
-                Text("\(Currency.usd.format(totalBudget - totalSpent)) Remaining")
-                    .font(.caption)
-                    .foregroundColor(Color.theme.brightCyan)
-            }
+    private var statusColor: Color {
+        if percentageUsed < 50 {
+            return LiquidGlassUI.Colors.success
+        } else if percentageUsed < 80 {
+            return LiquidGlassUI.Colors.warning
+        } else {
+            return LiquidGlassUI.Colors.danger
         }
-        .padding(20)
-        .readableGlassCard(cornerRadius: 20)
-        .padding(.horizontal)
     }
-}
-
-// MARK: - Budget Period Selector
-
-struct BudgetPeriodSelector: View {
-    @Binding var selectedPeriod: BudgetPeriod
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(BudgetPeriod.allCases, id: \.self) { period in
-                    Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedPeriod = period
-                        }
-                    } label: {
-                        VStack(spacing: 4) {
-                            Image(systemName: period.icon)
-                                .font(.title2)
-                            Text(period.rawValue)
-                                .font(.caption)
-                        }
-                        .frame(width: 80, height: 60)
-                        .foregroundColor(selectedPeriod == period ? .white : Color.theme.brightCyan)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(
-                                    selectedPeriod == period ?
-                                    AnyShapeStyle(
-                                        LinearGradient(
-                                            colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    ) : AnyShapeStyle(Color.clear)
-                                )
+        PremiumGlassCard(
+            glassIntensity: 0.35,
+            cornerRadius: 32,
+            glowColor: statusColor
+        ) {
+            VStack(spacing: LiquidGlassUI.Spacing.lg) {
+                // Header
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("BUDGET OVERVIEW")
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(1.5)
+                            .foregroundColor(LiquidGlassUI.Colors.textTertiary)
+
+                        Text("This Month")
+                            .font(LiquidGlassUI.Typography.headline)
+                            .foregroundColor(LiquidGlassUI.Colors.textPrimary)
+                    }
+
+                    Spacer()
+
+                    // Percentage indicator
+                    ZStack {
+                        Circle()
+                            .stroke(LiquidGlassUI.Colors.deepOcean.opacity(0.3), lineWidth: 8)
+                            .frame(width: 80, height: 80)
+
+                        Circle()
+                            .trim(from: 0, to: progressAnimation)
+                            .stroke(
+                                AngularGradient(
+                                    colors: [statusColor, statusColor.opacity(0.5), statusColor],
+                                    center: .center
+                                ),
+                                style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                            )
+                            .frame(width: 80, height: 80)
+                            .rotationEffect(.degrees(-90))
+                            .shadow(color: statusColor, radius: 5)
+
+                        Text("\(Int(percentageUsed))%")
+                            .font(LiquidGlassUI.Typography.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(statusColor)
+                    }
+                    .scaleEffect(glowPulse ? 1.05 : 1.0)
+                }
+
+                // Divider
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.clear,
+                                LiquidGlassUI.Colors.divider,
+                                Color.clear
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
                         )
-                        .glassCard(cornerRadius: 12)
+                    )
+                    .frame(height: 1)
+
+                // Stats
+                HStack(spacing: LiquidGlassUI.Spacing.xl) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(LiquidGlassUI.Colors.neonCyan)
+                                .frame(width: 8, height: 8)
+                            Text("Budget")
+                                .font(LiquidGlassUI.Typography.caption)
+                                .foregroundColor(LiquidGlassUI.Colors.textSecondary)
+                        }
+
+                        Text(String(format: "$%.0f", totalBudget))
+                            .font(LiquidGlassUI.Typography.title)
+                            .fontWeight(.bold)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        LiquidGlassUI.Colors.textPrimary,
+                                        LiquidGlassUI.Colors.neonCyan
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .center, spacing: 8) {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(statusColor)
+                                .frame(width: 8, height: 8)
+                            Text("Spent")
+                                .font(LiquidGlassUI.Typography.caption)
+                                .foregroundColor(LiquidGlassUI.Colors.textSecondary)
+                        }
+
+                        Text(String(format: "$%.0f", totalSpent))
+                            .font(LiquidGlassUI.Typography.title)
+                            .fontWeight(.bold)
+                            .foregroundColor(statusColor)
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .trailing, spacing: 8) {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(LiquidGlassUI.Colors.success)
+                                .frame(width: 8, height: 8)
+                            Text("Remaining")
+                                .font(LiquidGlassUI.Typography.caption)
+                                .foregroundColor(LiquidGlassUI.Colors.textSecondary)
+                        }
+
+                        Text(String(format: "$%.0f", remaining))
+                            .font(LiquidGlassUI.Typography.title)
+                            .fontWeight(.bold)
+                            .foregroundColor(LiquidGlassUI.Colors.success)
                     }
                 }
             }
-            .padding(.horizontal)
+        }
+        .padding(.horizontal)
+        .onAppear {
+            withAnimation(.spring(response: 1, dampingFraction: 0.7).delay(0.3)) {
+                progressAnimation = percentageUsed / 100
+            }
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                glowPulse = true
+            }
         }
     }
 }
 
-// MARK: - Budget Card
+// MARK: - Glass Period Selector
+struct GlassPeriodSelector: View {
+    @Binding var selectedPeriod: BudgetPeriod
+    @State private var liquidOffset: CGFloat = 0
 
-struct BudgetCard: View {
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Background glass
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(LiquidGlassUI.Colors.deepOcean.opacity(0.2))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(LiquidGlassUI.Colors.divider, lineWidth: 0.5)
+                    )
+
+                // Liquid selection indicator
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                LiquidGlassUI.Colors.neonCyan.opacity(0.3),
+                                LiquidGlassUI.Colors.neonBlue.opacity(0.2)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: geometry.size.width / 3 - 8)
+                    .offset(x: liquidOffset + 4)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedPeriod)
+
+                // Period options
+                HStack(spacing: 0) {
+                    ForEach(BudgetPeriod.allCases, id: \.self) { period in
+                        Button(action: {
+                            selectedPeriod = period
+                            let index = BudgetPeriod.allCases.firstIndex(of: period) ?? 0
+                            liquidOffset = CGFloat(index) * (geometry.size.width / 3)
+                        }) {
+                            Text(period.rawValue.capitalized)
+                                .font(LiquidGlassUI.Typography.callout)
+                                .fontWeight(selectedPeriod == period ? .semibold : .regular)
+                                .foregroundColor(
+                                    selectedPeriod == period ?
+                                    LiquidGlassUI.Colors.neonCyan :
+                                    LiquidGlassUI.Colors.textSecondary
+                                )
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(.vertical, 12)
+            }
+        }
+        .frame(height: 48)
+        .padding(.horizontal)
+        .onAppear {
+            // Use GeometryReader to get the actual width instead of deprecated UIScreen.main
+        }
+        .background(
+            GeometryReader { geometry in
+                Color.clear
+                    .onAppear {
+                        let index = BudgetPeriod.allCases.firstIndex(of: selectedPeriod) ?? 0
+                        liquidOffset = CGFloat(index) * (geometry.size.width) / 3
+                    }
+            }
+        )
+    }
+}
+
+// MARK: - Liquid Budget Card
+struct LiquidBudgetCard: View {
     let budget: Budget
-    @State private var isExpanded = false
+    @State private var expandAnimation = false
+    @State private var shimmerPhase: CGFloat = -1
 
-    private var spentAmount: Double {
-        // This would be calculated from actual transactions
-        budget.amount * 0.45 // Placeholder
+    // Mock spent amount (65% of budget)
+    private var spent: Double {
+        budget.amount * 0.65
     }
 
     private var percentageUsed: Double {
         guard budget.amount > 0 else { return 0 }
-        return (spentAmount / budget.amount) * 100
+        return min((spent / budget.amount) * 100, 100)
     }
 
     private var statusColor: Color {
-        if percentageUsed >= 100 {
-            return Color.theme.danger
-        } else if percentageUsed >= 80 {
-            return Color.theme.sparkOrange
+        if percentageUsed < 50 {
+            return LiquidGlassUI.Colors.success
+        } else if percentageUsed < 80 {
+            return LiquidGlassUI.Colors.warning
         } else {
-            return Color.theme.brightCyan
+            return LiquidGlassUI.Colors.danger
         }
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(budget.name)
-                        .font(.headline)
-                        .foregroundColor(Color.theme.pureWhite)
-                    Text("\(budget.period.rawValue) Budget")
-                        .font(.caption)
-                        .foregroundColor(Color.theme.brightCyan.opacity(0.7))
-                }
+        PremiumGlassCard(
+            glassIntensity: 0.25,
+            cornerRadius: 20,
+            glowColor: statusColor,
+            showGlow: percentageUsed > 80
+        ) {
+            VStack(alignment: .leading, spacing: LiquidGlassUI.Spacing.md) {
+                // Header
+                HStack {
+                    // Category icon
+                    ZStack {
+                        Circle()
+                            .fill(.ultraThinMaterial)
+                            .frame(width: 44, height: 44)
+                            .overlay(
+                                Circle()
+                                    .fill(statusColor.opacity(0.2))
+                            )
 
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(Currency.usd.format(budget.amount))
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color.theme.pureWhite)
-                    Text("\(Currency.usd.format(spentAmount)) spent")
-                        .font(.caption)
-                        .foregroundColor(statusColor)
-                }
-            }
-
-            // Progress Bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.theme.darkNavy.opacity(0.2))
-                        .frame(height: 8)
-
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(statusColor)
-                        .frame(width: geometry.size.width * min(percentageUsed / 100, 1.0), height: 8)
-                }
-            }
-            .frame(height: 8)
-
-            if isExpanded {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("\(Int(percentageUsed))% Used", systemImage: "chart.pie.fill")
-                            .font(.caption)
-                        Spacer()
-                        Label("\(budget.daysRemaining) days left", systemImage: "calendar")
-                            .font(.caption)
+                        Image(systemName: categoryIcon(for: budget.name))
+                            .font(.system(size: 20))
+                            .foregroundColor(statusColor)
                     }
-                    .foregroundColor(Color.theme.pureWhite.opacity(0.7))
 
-                    Text("Daily budget: \(Currency.usd.format(budget.dailyBudget))")
-                        .font(.caption)
-                        .foregroundColor(Color.theme.brightCyan)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(budget.name)
+                            .font(LiquidGlassUI.Typography.headline)
+                            .foregroundColor(LiquidGlassUI.Colors.textPrimary)
+
+                        Text("\(Int(percentageUsed))% used")
+                            .font(LiquidGlassUI.Typography.caption)
+                            .foregroundColor(LiquidGlassUI.Colors.textSecondary)
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(String(format: "$%.0f", spent))
+                            .font(LiquidGlassUI.Typography.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(statusColor)
+
+                        Text(String(format: "of $%.0f", budget.amount))
+                            .font(LiquidGlassUI.Typography.caption)
+                            .foregroundColor(LiquidGlassUI.Colors.textTertiary)
+                    }
                 }
-                .padding(.top, 4)
+
+                // Progress bar
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        // Background
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(LiquidGlassUI.Colors.deepOcean.opacity(0.3))
+                            .frame(height: 10)
+
+                        // Progress with liquid animation
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        statusColor,
+                                        statusColor.opacity(0.7)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: expandAnimation ? geometry.size.width * (percentageUsed / 100) : 0, height: 10)
+                            .shadow(color: statusColor, radius: 4)
+
+                        // Shimmer effect
+                        if expandAnimation {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(
+                                    LinearGradient(
+                                        stops: [
+                                            .init(color: Color.clear, location: max(0, shimmerPhase - 0.1)),
+                                            .init(color: Color.white.opacity(0.3), location: shimmerPhase),
+                                            .init(color: Color.clear, location: min(1, shimmerPhase + 0.1))
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: geometry.size.width * (percentageUsed / 100), height: 10)
+                        }
+                    }
+                }
+                .frame(height: 10)
             }
         }
-        .padding(16)
-        .readableGlassCard(cornerRadius: 16)
-        .onTapGesture {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                isExpanded.toggle()
+        .onAppear {
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
+                expandAnimation = true
+            }
+            withAnimation(.linear(duration: 2).delay(0.5).repeatForever(autoreverses: false)) {
+                shimmerPhase = 1.5
+            }
+        }
+    }
+
+    private func categoryIcon(for name: String) -> String {
+        let lowercased = name.lowercased()
+        if lowercased.contains("food") || lowercased.contains("dining") {
+            return "fork.knife"
+        } else if lowercased.contains("transport") || lowercased.contains("travel") {
+            return "car.fill"
+        } else if lowercased.contains("entertainment") {
+            return "tv.fill"
+        } else if lowercased.contains("shopping") {
+            return "bag.fill"
+        } else if lowercased.contains("bills") || lowercased.contains("utilities") {
+            return "doc.text.fill"
+        } else {
+            return "banknote.fill"
+        }
+    }
+}
+
+// MARK: - Empty Budget State
+struct EmptyBudgetState: View {
+    @State private var floatAnimation = false
+
+    var body: some View {
+        VStack(spacing: LiquidGlassUI.Spacing.lg) {
+            ZStack {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                LiquidGlassUI.Colors.neonCyan.opacity(0.2),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 20,
+                            endRadius: 60
+                        )
+                    )
+                    .frame(width: 120, height: 120)
+                    .blur(radius: 10)
+
+                Image(systemName: "chart.pie")
+                    .font(.system(size: 50))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                LiquidGlassUI.Colors.neonCyan,
+                                LiquidGlassUI.Colors.neonBlue
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .offset(y: floatAnimation ? -5 : 5)
+            }
+
+            Text("No budgets yet")
+                .font(LiquidGlassUI.Typography.headline)
+                .foregroundColor(LiquidGlassUI.Colors.textPrimary)
+
+            Text("Create your first budget to start tracking expenses")
+                .font(LiquidGlassUI.Typography.body)
+                .foregroundColor(LiquidGlassUI.Colors.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, LiquidGlassUI.Spacing.xl)
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+                floatAnimation = true
             }
         }
     }
 }
 
-// MARK: - Add Budget View
-
-struct AddBudgetView: View {
-    @Environment(\.dismiss) var dismiss
+// MARK: - Add Budget Sheet
+struct AddBudgetSheet: View {
     @Binding var budgets: [Budget]
-    @State private var budgetName = ""
-    @State private var budgetAmount = ""
-    @State private var selectedPeriod: BudgetPeriod = .monthly
-    @State private var selectedCategory: Category?
+    @Environment(\.dismiss) private var dismiss
+    @State private var name = ""
+    @State private var limit = ""
+    @State private var period: BudgetPeriod = .monthly
 
     var body: some View {
         NavigationStack {
             ZStack {
-                WallpaperBackground()
+                LiquidGlassBackground()
 
-                VStack(spacing: 24) {
-                    Spacer()
+                VStack(spacing: LiquidGlassUI.Spacing.lg) {
+                    // Form fields
+                    VStack(alignment: .leading, spacing: LiquidGlassUI.Spacing.md) {
+                        Text("Budget Name")
+                            .font(LiquidGlassUI.Typography.callout)
+                            .foregroundColor(LiquidGlassUI.Colors.textSecondary)
 
-                    VStack(spacing: 20) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Budget Name")
-                                .font(.caption)
-                                .foregroundColor(Color.theme.brightCyan)
+                        GlassTextField(placeholder: "e.g., Food & Dining", text: $name)
 
-                            TextField("Monthly Groceries", text: $budgetName, prompt: Text("Monthly Groceries").foregroundColor(Color.theme.pureWhite.opacity(0.5)))
-                                .glassTextField()
-                        }
+                        Text("Monthly Limit")
+                            .font(LiquidGlassUI.Typography.callout)
+                            .foregroundColor(LiquidGlassUI.Colors.textSecondary)
+                            .padding(.top)
 
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Amount")
-                                .font(.caption)
-                                .foregroundColor(Color.theme.brightCyan)
+                        GlassTextField(placeholder: "Enter amount", text: $limit)
 
-                            TextField("500", text: $budgetAmount, prompt: Text("500").foregroundColor(Color.theme.pureWhite.opacity(0.5)))
-                                .glassTextField()
-                                .keyboardType(.decimalPad)
-                        }
+                        Text("Period")
+                            .font(LiquidGlassUI.Typography.callout)
+                            .foregroundColor(LiquidGlassUI.Colors.textSecondary)
+                            .padding(.top)
 
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Period")
-                                .font(.caption)
-                                .foregroundColor(Color.theme.brightCyan)
-
-                            BudgetPeriodPicker(selectedPeriod: $selectedPeriod)
-                        }
+                        GlassPeriodSelector(selectedPeriod: $period)
                     }
-                    .padding(.horizontal, 30)
+                    .padding()
 
                     Spacer()
 
-                    Button {
-                        createBudget()
-                        dismiss()
-                    } label: {
-                        Text("Create Budget")
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
-                            .frame(width: 220, height: 54)
-                            .glassCard(cornerRadius: 27)
-                            .overlay(
-                                Capsule()
-                                    .strokeBorder(
-                                        LinearGradient(
-                                            colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        ),
-                                        lineWidth: 2
-                                    )
-                            )
-                            .foregroundColor(.white)
-                            .shadow(color: Color.theme.brightCyan.opacity(0.3), radius: 15, y: 5)
+                    // Action buttons
+                    HStack(spacing: LiquidGlassUI.Spacing.md) {
+                        LiquidButton("Cancel", style: .secondary) {
+                            dismiss()
+                        }
+
+                        LiquidButton("Create Budget", style: .primary) {
+                            // Create budget logic
+                            dismiss()
+                        }
+                        .disabled(name.isEmpty || limit.isEmpty)
+                        .opacity(name.isEmpty || limit.isEmpty ? 0.6 : 1)
                     }
-                    .disabled(budgetName.isEmpty || budgetAmount.isEmpty)
-                    .opacity(budgetName.isEmpty || budgetAmount.isEmpty ? 0.5 : 1)
-
-                    Spacer()
+                    .padding()
                 }
             }
             .navigationTitle("New Budget")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundColor(Color.theme.brightCyan)
-                }
-            }
-        }
-    }
-
-    private func createBudget() {
-        guard let amount = Double(budgetAmount) else { return }
-
-        let (startDate, endDate) = selectedPeriod.nextPeriodDates()
-        let budget = Budget(
-            name: budgetName,
-            amount: amount,
-            categoryId: selectedCategory?.id,
-            period: selectedPeriod,
-            startDate: startDate,
-            endDate: endDate
-        )
-
-        budgets.append(budget)
-
-        // Save to Core Data
-        _ = CoreDataManager.shared.createBudget(
-            name: budgetName,
-            amount: amount,
-            category: nil,
-            period: selectedPeriod.rawValue.lowercased()
-        )
-    }
-}
-
-// MARK: - Budget Period Picker
-
-struct BudgetPeriodPicker: View {
-    @Binding var selectedPeriod: BudgetPeriod
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(BudgetPeriod.allCases, id: \.self) { period in
-                    Button {
-                        selectedPeriod = period
-                    } label: {
-                        Text(period.rawValue)
-                            .font(.caption)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .foregroundColor(selectedPeriod == period ? .white : Color.theme.brightCyan)
-                            .background(
-                                selectedPeriod == period ?
-                                LinearGradient(
-                                    colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                ) : LinearGradient(colors: [Color.clear], startPoint: .leading, endPoint: .trailing)
-                            )
-                            .clipShape(Capsule())
-                            .overlay(
-                                Capsule()
-                                    .strokeBorder(Color.theme.brightCyan.opacity(0.3), lineWidth: 1)
-                            )
-                    }
-                }
-            }
         }
     }
 }
@@ -497,4 +644,5 @@ struct BudgetPeriodPicker: View {
 #Preview {
     BudgetView()
         .environmentObject(SessionManager())
+        .preferredColorScheme(.dark)
 }

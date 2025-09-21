@@ -8,643 +8,579 @@ struct AnalyticsView: View {
     @State private var appearAnimation = false
     @State private var chartData: [ChartDataPoint] = []
     @State private var categoryBreakdown: [(Category, Double)] = []
+    @State private var liquidPhase: CGFloat = 0
+    @State private var glowPulse = false
 
     var body: some View {
-        ZStack {
-            WallpaperBackground()
-
-            VStack(spacing: 0) {
-                // Title at top
-                Text("Analytics")
-                    .font(.largeTitle.bold())
-                    .foregroundColor(Color.theme.pureWhite)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-                    .padding(.top, 60)
-                    .padding(.bottom, 16)
-
-                // Fixed Period Selector at top
-                AnalyticsPeriodSelector(selectedPeriod: $selectedPeriod)
-                    .padding(.horizontal)
-                    .padding(.bottom, 16)
-                    .opacity(appearAnimation ? 1 : 0)
-                    .offset(y: appearAnimation ? 0 : -20)
+        NavigationStack {
+            ZStack {
+                // Premium liquid glass background
+                LiquidGlassBackground()
 
                 ScrollView {
-                    VStack(spacing: 20) {
-                        // Spending Overview Card
-                        SpendingOverviewCard(period: selectedPeriod)
+                    VStack(spacing: LiquidGlassUI.Spacing.lg) {
+                        // Glass Period Selector
+                        LiquidPeriodSelector(selectedPeriod: $selectedPeriod)
                             .padding(.horizontal)
+                            .padding(.top, LiquidGlassUI.Spacing.md)
                             .opacity(appearAnimation ? 1 : 0)
-                            .offset(y: appearAnimation ? 0 : 20)
-                            .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1), value: appearAnimation)
+                            .offset(y: appearAnimation ? 0 : -20)
 
-                        // Spending Chart
-                        SpendingChartCard(chartData: chartData, period: selectedPeriod)
+                        // Premium Spending Overview Card
+                        PremiumSpendingOverviewCard(period: selectedPeriod)
                             .padding(.horizontal)
                             .opacity(appearAnimation ? 1 : 0)
                             .offset(y: appearAnimation ? 0 : 20)
+
+                        // Liquid Glass Chart
+                        LiquidSpendingChart(chartData: chartData, period: selectedPeriod)
+                            .padding(.horizontal)
+                            .opacity(appearAnimation ? 1 : 0)
+                            .offset(y: appearAnimation ? 0 : 30)
                             .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2), value: appearAnimation)
 
-                        // Category Breakdown
-                        CategoryBreakdownCard(breakdown: categoryBreakdown)
+                        // Premium Category Breakdown
+                        PremiumCategoryBreakdown(breakdown: categoryBreakdown)
                             .padding(.horizontal)
                             .opacity(appearAnimation ? 1 : 0)
-                            .offset(y: appearAnimation ? 0 : 20)
+                            .offset(y: appearAnimation ? 0 : 40)
                             .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.3), value: appearAnimation)
 
-                        // Insights
-                        InsightsCard()
+                        // Top Merchants Card
+                        TopMerchantsCard()
                             .padding(.horizontal)
                             .opacity(appearAnimation ? 1 : 0)
-                            .offset(y: appearAnimation ? 0 : 20)
+                            .offset(y: appearAnimation ? 0 : 50)
                             .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.4), value: appearAnimation)
 
                         Spacer(minLength: 100)
                     }
-                    .padding(.top, 8)
+                    .padding(.vertical)
                 }
             }
-        }
-        .onAppear {
-            loadAnalyticsData()
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                appearAnimation = true
+            .navigationTitle("Analytics")
+            .navigationBarTitleDisplayMode(.large)
+            .onAppear {
+                loadAnalyticsData()
+                withAnimation(.spring(response: 0.8, dampingFraction: 0.7)) {
+                    appearAnimation = true
+                }
+                withAnimation(.linear(duration: 15).repeatForever(autoreverses: false)) {
+                    liquidPhase = .pi * 2
+                }
+                withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+                    glowPulse = true
+                }
             }
         }
     }
 
     private func loadAnalyticsData() {
-        // Generate sample data for now
-        chartData = generateSampleChartData()
-        categoryBreakdown = generateSampleCategoryData()
+        // Load chart data
+        chartData = generateMockChartData()
+        // Load category breakdown
+        categoryBreakdown = generateMockCategoryData()
     }
 
-    private func generateSampleChartData() -> [ChartDataPoint] {
-        var data: [ChartDataPoint] = []
-        let calendar = Calendar.current
-        let today = Date()
-
-        for i in 0..<30 {
-            if let date = calendar.date(byAdding: .day, value: -i, to: today) {
-                data.append(ChartDataPoint(
-                    date: date,
-                    amount: Double.random(in: 20...200)
-                ))
-            }
+    private func generateMockChartData() -> [ChartDataPoint] {
+        let days = selectedPeriod == .week ? 7 : selectedPeriod == .month ? 30 : 365
+        return (0..<min(days, 12)).map { index in
+            ChartDataPoint(
+                date: Date().addingTimeInterval(-86400 * Double(days - index)),
+                value: Double.random(in: 50...500)
+            )
         }
-
-        return data.reversed()
     }
 
-    private func generateSampleCategoryData() -> [(Category, Double)] {
+    private func generateMockCategoryData() -> [(Category, Double)] {
         return [
-            (Category.defaultCategories[0], 450.0),
-            (Category.defaultCategories[1], 280.0),
-            (Category.defaultCategories[2], 320.0),
-            (Category.defaultCategories[3], 150.0),
-            (Category.defaultCategories[4], 200.0)
+            (Category(name: "Food & Dining", icon: "fork.knife", colorHex: "#34C759"), 450),
+            (Category(name: "Transportation", icon: "car.fill", colorHex: "#007AFF"), 280),
+            (Category(name: "Entertainment", icon: "tv.fill", colorHex: "#AF52DE"), 150),
+            (Category(name: "Shopping", icon: "bag.fill", colorHex: "#FF9500"), 320),
+            (Category(name: "Bills", icon: "doc.text.fill", colorHex: "#FF3B30"), 200)
         ]
     }
 }
 
-// MARK: - Analytics Period
+// MARK: - Liquid Period Selector
+struct LiquidPeriodSelector: View {
+    @Binding var selectedPeriod: AnalyticsPeriod
+    @State private var liquidOffset: CGFloat = 0
 
-enum AnalyticsPeriod: String, CaseIterable {
-    case week = "Week"
-    case month = "Month"
-    case year = "Year"
-    case all = "All Time"
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Glass background
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(LiquidGlassUI.Colors.deepOcean.opacity(0.2))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        LiquidGlassUI.Colors.neonCyan.opacity(0.3),
+                                        LiquidGlassUI.Colors.neonBlue.opacity(0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(color: Color.black.opacity(0.2), radius: 10, y: 5)
 
-    var icon: String {
-        switch self {
-        case .week: return "calendar.badge.clock"
-        case .month: return "calendar"
-        case .year: return "calendar.circle"
-        case .all: return "infinity"
+                // Liquid indicator with glow
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                LiquidGlassUI.Colors.neonCyan.opacity(0.4),
+                                LiquidGlassUI.Colors.neonBlue.opacity(0.3)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: geometry.size.width / 3 - 8)
+                    .offset(x: liquidOffset + 4)
+                    .shadow(color: LiquidGlassUI.Colors.neonCyan.opacity(0.5), radius: 8)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedPeriod)
+
+                // Options
+                HStack(spacing: 0) {
+                    ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
+                        Button(action: {
+                            selectedPeriod = period
+                            let index = AnalyticsPeriod.allCases.firstIndex(of: period) ?? 0
+                            liquidOffset = CGFloat(index) * (geometry.size.width / 3)
+                        }) {
+                            Text(period.rawValue.capitalized)
+                                .font(LiquidGlassUI.Typography.callout)
+                                .fontWeight(selectedPeriod == period ? .bold : .medium)
+                                .foregroundColor(
+                                    selectedPeriod == period ?
+                                    LiquidGlassUI.Colors.textPrimary :
+                                    LiquidGlassUI.Colors.textSecondary
+                                )
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(.vertical, 14)
+            }
         }
+        .frame(height: 56)
     }
 }
 
-// MARK: - Chart Data Point
+// MARK: - Premium Spending Overview Card
+struct PremiumSpendingOverviewCard: View {
+    let period: AnalyticsPeriod
+    @State private var animateNumbers = false
+    @State private var pulseGlow = false
 
-struct ChartDataPoint: Identifiable {
-    let id = UUID()
-    let date: Date
-    let amount: Double
-}
-
-// MARK: - Period Selector
-
-struct AnalyticsPeriodSelector: View {
-    @Binding var selectedPeriod: AnalyticsPeriod
+    private var totalSpent: Double { 2850.0 }
+    private var average: Double { totalSpent / 30 }
+    private var trend: Double { 12.5 }
 
     var body: some View {
-        HStack(spacing: 12) {
-            ForEach(AnalyticsPeriod.allCases, id: \.self) { period in
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        selectedPeriod = period
+        PremiumGlassCard(
+            glassIntensity: 0.35,
+            cornerRadius: 28,
+            glowColor: LiquidGlassUI.Colors.neonPurple,
+            showGlow: true
+        ) {
+            VStack(spacing: LiquidGlassUI.Spacing.lg) {
+                // Header
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("SPENDING OVERVIEW")
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(1.5)
+                            .foregroundColor(LiquidGlassUI.Colors.textTertiary)
+
+                        Text("\(period.rawValue.capitalized) Total")
+                            .font(LiquidGlassUI.Typography.headline)
+                            .foregroundColor(LiquidGlassUI.Colors.textPrimary)
                     }
-                } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: period.icon)
-                            .font(.title3)
-                        Text(period.rawValue)
-                            .font(.caption2)
+
+                    Spacer()
+
+                    // Trend indicator
+                    HStack(spacing: 4) {
+                        Image(systemName: trend > 0 ? "arrow.up.right" : "arrow.down.right")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(trend > 0 ? LiquidGlassUI.Colors.danger : LiquidGlassUI.Colors.success)
+
+                        Text("\(Int(abs(trend)))%")
+                            .font(LiquidGlassUI.Typography.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(trend > 0 ? LiquidGlassUI.Colors.danger : LiquidGlassUI.Colors.success)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .foregroundColor(selectedPeriod == period ? Color.theme.darkNavy : Color.theme.pureWhite.opacity(0.7))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .background(
-                        Capsule()
-                            .fill(
-                                selectedPeriod == period ?
-                                AnyShapeStyle(
-                                    LinearGradient(
-                                        colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                ) : AnyShapeStyle(Color.clear)
-                            )
-                            .overlay(
-                                selectedPeriod != period ?
-                                Capsule()
-                                    .strokeBorder(Color.theme.brightCyan.opacity(0.3), lineWidth: 1) :
-                                nil
-                            )
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill((trend > 0 ? LiquidGlassUI.Colors.danger : LiquidGlassUI.Colors.success).opacity(0.15))
+                    )
+                    .scaleEffect(pulseGlow ? 1.05 : 1.0)
+                }
+
+                // Main amount with liquid gradient
+                Text(String(format: "$%.2f", animateNumbers ? totalSpent : 0))
+                    .font(.system(size: 48, weight: .bold, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                LiquidGlassUI.Colors.neonCyan,
+                                LiquidGlassUI.Colors.neonPurple,
+                                LiquidGlassUI.Colors.neonBlue
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .shadow(color: LiquidGlassUI.Colors.neonPurple.opacity(0.5), radius: 15)
+
+                // Stats row
+                HStack(spacing: LiquidGlassUI.Spacing.xl) {
+                    StatItem(
+                        label: "Daily Avg",
+                        value: String(format: "$%.0f", average),
+                        color: LiquidGlassUI.Colors.neonCyan
+                    )
+
+                    // Divider
+                    Rectangle()
+                        .fill(LiquidGlassUI.Colors.divider)
+                        .frame(width: 1, height: 40)
+
+                    StatItem(
+                        label: "Transactions",
+                        value: "47",
+                        color: LiquidGlassUI.Colors.neonBlue
+                    )
+
+                    // Divider
+                    Rectangle()
+                        .fill(LiquidGlassUI.Colors.divider)
+                        .frame(width: 1, height: 40)
+
+                    StatItem(
+                        label: "Categories",
+                        value: "8",
+                        color: LiquidGlassUI.Colors.neonPurple
                     )
                 }
             }
         }
-        .padding(6)
-        .background(
-            Capsule()
-                .fill(Color.theme.darkNavy.opacity(0.8))
-                .background(
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                )
-                .overlay(
-                    Capsule()
-                        .strokeBorder(Color.theme.brightCyan.opacity(0.2), lineWidth: 0.5)
-                )
-        )
-    }
-}
-
-// MARK: - Spending Overview Card
-
-struct SpendingOverviewCard: View {
-    let period: AnalyticsPeriod
-    @State private var animateValue = false
-
-    private var totalSpent: Double { 2847.50 } // Sample data
-    private var averageDaily: Double { 94.92 }
-    private var trend: Double { -12.5 }
-
-    var body: some View {
-        VStack(spacing: 20) {
-            HStack {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Total Spent")
-                        .font(.caption)
-                        .foregroundColor(Color.theme.pureWhite.opacity(0.6))
-                    Text(Currency.usd.format(animateValue ? totalSpent : 0))
-                        .font(.system(size: 32, weight: .bold))
-                        .refractiveText()
-                }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 8) {
-                    HStack(spacing: 4) {
-                        Image(systemName: trend < 0 ? "arrow.down" : "arrow.up")
-                            .font(.caption)
-                        Text("\(abs(trend), specifier: "%.1f")%")
-                            .font(.caption)
-                    }
-                    .foregroundColor(trend < 0 ? Color.theme.success : Color.theme.danger)
-
-                    Text("vs last \(period.rawValue.lowercased())")
-                        .font(.caption2)
-                        .foregroundColor(Color.theme.pureWhite.opacity(0.6))
-                }
-            }
-
-            Divider()
-                .background(Color.theme.brightCyan.opacity(0.3))
-
-            HStack(spacing: 20) {
-                StatItem(
-                    title: "Daily Avg",
-                    value: Currency.usd.format(averageDaily),
-                    icon: "calendar.day.timeline.left"
-                )
-
-                StatItem(
-                    title: "Transactions",
-                    value: "47",
-                    icon: "arrow.left.arrow.right"
-                )
-
-                StatItem(
-                    title: "Categories",
-                    value: "8",
-                    icon: "square.grid.2x2"
-                )
-            }
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.theme.darkNavy.opacity(0.9))
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .strokeBorder(Color.theme.brightCyan.opacity(0.2), lineWidth: 0.5)
-                )
-        )
-        .shadow(color: Color.black.opacity(0.3), radius: 10, y: 5)
         .onAppear {
-            withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
-                animateValue = true
+            withAnimation(.spring(response: 1, dampingFraction: 0.7).delay(0.3)) {
+                animateNumbers = true
+            }
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                pulseGlow = true
             }
         }
     }
 }
 
 // MARK: - Stat Item
-
 struct StatItem: View {
-    let title: String
+    let label: String
     let value: String
-    let icon: String
+    let color: Color
 
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(Color.theme.brightCyan)
+        VStack(spacing: 6) {
+            Text(label)
+                .font(LiquidGlassUI.Typography.caption)
+                .foregroundColor(LiquidGlassUI.Colors.textTertiary)
 
             Text(value)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color.theme.pureWhite)
-
-            Text(title)
-                .font(.caption2)
-                .foregroundColor(Color.theme.pureWhite.opacity(0.6))
+                .font(LiquidGlassUI.Typography.headline)
+                .fontWeight(.bold)
+                .foregroundColor(color)
         }
-        .frame(maxWidth: .infinity)
     }
 }
 
-// MARK: - Spending Chart Card
-
-struct SpendingChartCard: View {
+// MARK: - Liquid Spending Chart
+struct LiquidSpendingChart: View {
     let chartData: [ChartDataPoint]
     let period: AnalyticsPeriod
-    @State private var selectedPoint: ChartDataPoint?
+    @State private var animateChart = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Spending Trend")
-                .font(.headline)
-                .foregroundColor(Color.theme.pureWhite)
+        PremiumGlassCard(
+            glassIntensity: 0.25,
+            cornerRadius: 24,
+            glowColor: LiquidGlassUI.Colors.neonBlue
+        ) {
+            VStack(alignment: .leading, spacing: LiquidGlassUI.Spacing.md) {
+                Text("Spending Trend")
+                    .font(LiquidGlassUI.Typography.headline)
+                    .foregroundColor(LiquidGlassUI.Colors.textPrimary)
 
-            Chart(chartData) { point in
-                LineMark(
-                    x: .value("Date", point.date),
-                    y: .value("Amount", point.amount)
-                )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.theme.brightCyan, Color.theme.electricBlue],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .lineStyle(StrokeStyle(lineWidth: 2))
-                .interpolationMethod(.catmullRom)
+                if !chartData.isEmpty {
+                    Chart(chartData) { point in
+                        LineMark(
+                            x: .value("Date", point.date),
+                            y: .value("Amount", animateChart ? point.value : 0)
+                        )
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    LiquidGlassUI.Colors.neonCyan,
+                                    LiquidGlassUI.Colors.neonBlue
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round))
+                        .shadow(color: LiquidGlassUI.Colors.neonBlue.opacity(0.5), radius: 5)
 
-                AreaMark(
-                    x: .value("Date", point.date),
-                    y: .value("Amount", point.amount)
-                )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            Color.theme.brightCyan.opacity(0.3),
-                            Color.theme.electricBlue.opacity(0.1)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .interpolationMethod(.catmullRom)
-
-                if let selected = selectedPoint, selected.id == point.id {
-                    PointMark(
-                        x: .value("Date", point.date),
-                        y: .value("Amount", point.amount)
-                    )
-                    .foregroundStyle(Color.theme.brightCyan)
-                    .symbolSize(100)
-                }
-            }
-            .frame(height: 200)
-            .chartYAxis {
-                AxisMarks(position: .leading) { value in
-                    AxisValueLabel {
-                        if let amount = value.as(Double.self) {
-                            Text("$\(Int(amount))")
-                                .font(.caption)
-                                .foregroundColor(Color.theme.pureWhite.opacity(0.6))
+                        AreaMark(
+                            x: .value("Date", point.date),
+                            y: .value("Amount", animateChart ? point.value : 0)
+                        )
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    LiquidGlassUI.Colors.neonCyan.opacity(0.3),
+                                    LiquidGlassUI.Colors.neonBlue.opacity(0.1)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    }
+                    .frame(height: 200)
+                    .chartXAxis {
+                        AxisMarks(values: .automatic) { _ in
+                            AxisValueLabel()
+                                .foregroundStyle(LiquidGlassUI.Colors.textTertiary)
                         }
                     }
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Color.theme.brightCyan.opacity(0.1))
-                }
-            }
-            .chartXAxis {
-                AxisMarks { value in
-                    AxisValueLabel {
-                        if let date = value.as(Date.self) {
-                            Text(date, format: .dateTime.day())
-                                .font(.caption)
-                                .foregroundColor(Color.theme.pureWhite.opacity(0.6))
+                    .chartYAxis {
+                        AxisMarks(values: .automatic) { _ in
+                            AxisValueLabel()
+                                .foregroundStyle(LiquidGlassUI.Colors.textTertiary)
                         }
                     }
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Color.theme.brightCyan.opacity(0.1))
                 }
-            }
-            .chartBackground { chartProxy in
-                Color.clear
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.theme.darkNavy.opacity(0.9))
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .strokeBorder(Color.theme.brightCyan.opacity(0.2), lineWidth: 0.5)
-                )
-        )
-        .shadow(color: Color.black.opacity(0.3), radius: 10, y: 5)
+        .onAppear {
+            withAnimation(.spring(response: 1, dampingFraction: 0.7).delay(0.5)) {
+                animateChart = true
+            }
+        }
     }
 }
 
-// MARK: - Category Breakdown Card
-
-struct CategoryBreakdownCard: View {
+// MARK: - Premium Category Breakdown
+struct PremiumCategoryBreakdown: View {
     let breakdown: [(Category, Double)]
-    @State private var selectedCategory: Category?
+    @State private var expandCards = false
 
     private var total: Double {
         breakdown.reduce(0) { $0 + $1.1 }
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Category Breakdown")
-                .font(.headline)
-                .foregroundColor(Color.theme.pureWhite)
+        PremiumGlassCard(
+            glassIntensity: 0.3,
+            cornerRadius: 24,
+            glowColor: LiquidGlassUI.Colors.neonPurple
+        ) {
+            VStack(alignment: .leading, spacing: LiquidGlassUI.Spacing.lg) {
+                Text("Category Breakdown")
+                    .font(LiquidGlassUI.Typography.headline)
+                    .foregroundColor(LiquidGlassUI.Colors.textPrimary)
 
-            VStack(spacing: 12) {
-                ForEach(breakdown, id: \.0.id) { category, amount in
-                    CategoryRow(
-                        category: category,
-                        amount: amount,
-                        percentage: (amount / total) * 100,
-                        isSelected: selectedCategory?.id == category.id
-                    )
-                    .onTapGesture {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            if selectedCategory?.id == category.id {
-                                selectedCategory = nil
-                            } else {
-                                selectedCategory = category
-                            }
+                VStack(spacing: LiquidGlassUI.Spacing.md) {
+                    ForEach(Array(breakdown.enumerated()), id: \.offset) { index, item in
+                        CategoryRow(
+                            category: item.0,
+                            amount: item.1,
+                            percentage: (item.1 / total) * 100,
+                            delay: Double(index) * 0.1
+                        )
+                        .opacity(expandCards ? 1 : 0)
+                        .offset(x: expandCards ? 0 : -30)
+                    }
+                }
+            }
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.3)) {
+                expandCards = true
+            }
+        }
+    }
+}
+
+// MARK: - Category Row
+struct CategoryRow: View {
+    let category: Category
+    let amount: Double
+    let percentage: Double
+    let delay: Double
+    @State private var expandBar = false
+
+    var body: some View {
+        VStack(spacing: LiquidGlassUI.Spacing.sm) {
+            HStack {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 36, height: 36)
+                        .overlay(
+                            Circle()
+                                .fill(category.color.opacity(0.2))
+                        )
+
+                    Image(systemName: category.icon)
+                        .font(.system(size: 16))
+                        .foregroundColor(category.color)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(category.name)
+                        .font(LiquidGlassUI.Typography.callout)
+                        .foregroundColor(LiquidGlassUI.Colors.textPrimary)
+
+                    Text("\(Int(percentage))%")
+                        .font(LiquidGlassUI.Typography.caption)
+                        .foregroundColor(LiquidGlassUI.Colors.textTertiary)
+                }
+
+                Spacer()
+
+                Text(String(format: "$%.0f", amount))
+                    .font(LiquidGlassUI.Typography.callout)
+                    .fontWeight(.semibold)
+                    .foregroundColor(category.color)
+            }
+
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(LiquidGlassUI.Colors.deepOcean.opacity(0.3))
+
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    category.color,
+                                    category.color.opacity(0.6)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: expandBar ? geometry.size.width * (percentage / 100) : 0)
+                        .shadow(color: category.color.opacity(0.5), radius: 4)
+                }
+            }
+            .frame(height: 6)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(delay + 0.5)) {
+                expandBar = true
+            }
+        }
+    }
+}
+
+// MARK: - Top Merchants Card
+struct TopMerchantsCard: View {
+    @State private var merchants = [
+        ("Starbucks", 185.50, "cup.and.saucer.fill"),
+        ("Uber", 142.00, "car.fill"),
+        ("Amazon", 89.99, "cart.fill"),
+        ("Netflix", 15.99, "tv.fill"),
+        ("Whole Foods", 234.67, "basket.fill")
+    ]
+
+    var body: some View {
+        PremiumGlassCard(
+            glassIntensity: 0.25,
+            cornerRadius: 24,
+            glowColor: LiquidGlassUI.Colors.neonCyan
+        ) {
+            VStack(alignment: .leading, spacing: LiquidGlassUI.Spacing.lg) {
+                Text("Top Merchants")
+                    .font(LiquidGlassUI.Typography.headline)
+                    .foregroundColor(LiquidGlassUI.Colors.textPrimary)
+
+                VStack(spacing: LiquidGlassUI.Spacing.md) {
+                    ForEach(Array(merchants.prefix(5).enumerated()), id: \.offset) { index, merchant in
+                        HStack {
+                            // Rank
+                            Text("#\(index + 1)")
+                                .font(LiquidGlassUI.Typography.caption)
+                                .foregroundColor(LiquidGlassUI.Colors.neonCyan)
+                                .frame(width: 30)
+
+                            // Icon
+                            Image(systemName: merchant.2)
+                                .font(.system(size: 16))
+                                .foregroundColor(LiquidGlassUI.Colors.textSecondary)
+                                .frame(width: 24)
+
+                            Text(merchant.0)
+                                .font(LiquidGlassUI.Typography.callout)
+                                .foregroundColor(LiquidGlassUI.Colors.textPrimary)
+
+                            Spacer()
+
+                            Text(String(format: "$%.2f", merchant.1))
+                                .font(LiquidGlassUI.Typography.callout)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            LiquidGlassUI.Colors.neonCyan,
+                                            LiquidGlassUI.Colors.neonBlue
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
                         }
                     }
                 }
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.theme.darkNavy.opacity(0.9))
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .strokeBorder(Color.theme.brightCyan.opacity(0.2), lineWidth: 0.5)
-                )
-        )
-        .shadow(color: Color.black.opacity(0.3), radius: 10, y: 5)
     }
 }
 
-// MARK: - Category Row
-
-struct CategoryRow: View {
-    let category: Category
-    let amount: Double
-    let percentage: Double
-    let isSelected: Bool
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: category.icon)
-                .font(.title3)
-                .foregroundColor(category.color)
-                .frame(width: 40, height: 40)
-                .background(category.color.opacity(0.2))
-                .clipShape(Circle())
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(category.name)
-                    .font(.subheadline)
-                    .foregroundColor(Color.theme.pureWhite)
-
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.theme.darkNavy.opacity(0.3))
-                            .frame(height: 6)
-
-                        Capsule()
-                            .fill(category.color)
-                            .frame(width: geometry.size.width * (percentage / 100), height: 6)
-                            .animation(.spring(response: 0.6, dampingFraction: 0.7), value: percentage)
-                    }
-                }
-                .frame(height: 6)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(Currency.usd.format(amount))
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(Color.theme.pureWhite)
-
-                Text("\(percentage, specifier: "%.1f")%")
-                    .font(.caption)
-                    .foregroundColor(Color.theme.pureWhite.opacity(0.6))
-            }
-        }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(isSelected ? category.color.opacity(0.1) : Color.clear)
-        )
-        .scaleEffect(isSelected ? 1.02 : 1.0)
-    }
+// MARK: - Supporting Types
+struct ChartDataPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let value: Double
 }
 
-// MARK: - Insights Card
-
-struct InsightsCard: View {
-    @State private var currentInsight = 0
-    let insights = [
-        Insight(
-            icon: "lightbulb.fill",
-            title: "Spending Trend",
-            description: "You've reduced spending by 12% this month!",
-            type: .positive
-        ),
-        Insight(
-            icon: "cart.fill",
-            title: "Top Category",
-            description: "Food & Dining is your highest expense at 35%",
-            type: .neutral
-        ),
-        Insight(
-            icon: "exclamationmark.triangle.fill",
-            title: "Budget Alert",
-            description: "Entertainment budget 80% used with 10 days left",
-            type: .warning
-        )
-    ]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Insights")
-                    .font(.headline)
-                    .foregroundColor(Color.theme.pureWhite)
-
-                Spacer()
-
-                HStack(spacing: 8) {
-                    ForEach(0..<insights.count, id: \.self) { index in
-                        Circle()
-                            .fill(index == currentInsight ? Color.theme.brightCyan : Color.theme.pureWhite.opacity(0.3))
-                            .frame(width: 6, height: 6)
-                    }
-                }
-            }
-
-            TabView(selection: $currentInsight) {
-                ForEach(0..<insights.count, id: \.self) { index in
-                    InsightRow(insight: insights[index])
-                        .tag(index)
-                }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .frame(height: 80)
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.theme.darkNavy.opacity(0.9))
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .strokeBorder(Color.theme.brightCyan.opacity(0.2), lineWidth: 0.5)
-                )
-        )
-        .shadow(color: Color.black.opacity(0.3), radius: 10, y: 5)
-        .onAppear {
-            Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    currentInsight = (currentInsight + 1) % insights.count
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Insight Model
-
-struct Insight {
-    let icon: String
-    let title: String
-    let description: String
-    let type: InsightType
-
-    enum InsightType {
-        case positive, neutral, warning
-
-        var color: Color {
-            switch self {
-            case .positive: return Color.theme.success
-            case .neutral: return Color.theme.brightCyan
-            case .warning: return Color.theme.sparkOrange
-            }
-        }
-    }
-}
-
-// MARK: - Insight Row
-
-struct InsightRow: View {
-    let insight: Insight
-
-    var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: insight.icon)
-                .font(.title2)
-                .foregroundColor(insight.type.color)
-                .frame(width: 44, height: 44)
-                .background(insight.type.color.opacity(0.2))
-                .clipShape(Circle())
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(insight.title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(Color.theme.pureWhite)
-
-                Text(insight.description)
-                    .font(.caption)
-                    .foregroundColor(Color.theme.pureWhite.opacity(0.7))
-                    .lineLimit(2)
-            }
-
-            Spacer()
-        }
-    }
+enum AnalyticsPeriod: String, CaseIterable {
+    case week = "week"
+    case month = "month"
+    case year = "year"
 }
 
 #Preview {
     AnalyticsView()
         .environmentObject(SessionManager())
+        .preferredColorScheme(.dark)
 }
